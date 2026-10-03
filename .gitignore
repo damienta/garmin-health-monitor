@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+.wrangler/
+dist/
+
+# Secrets and personal data: never commit
+.env
+.env.*
+.dev.vars
+garmin_tokens.json
+*.tokens.json
+.garmin/
+data/
