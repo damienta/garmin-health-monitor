@@ -21,7 +21,7 @@ jobs:
         working-directory: collector
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: collector/uv.lock
@@ -60,7 +60,7 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: worker/package-lock.json
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: collector/uv.lock
