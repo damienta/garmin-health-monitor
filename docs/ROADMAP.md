@@ -4,7 +4,7 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 | Day | Slice | State |
 | --- | --- | --- |
-| 1 | Garmin connection (collector) | In review |
+| 1 | Garmin connection (collector) | **Done** (see `docs/garmin-findings.md`) |
 | 2 | Backend: Worker + D1, daily GitHub Action, healthchecks.io | Not started |
 | 3 | Grafana dashboards and alert | Not started |
 | 4 | Frontend (React on the Worker, behind Cloudflare Access) | Not started |
