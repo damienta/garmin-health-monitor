@@ -18,10 +18,9 @@ You already have a Cloudflare account from your portfolio.
 cd worker
 npm ci
 npx wrangler login                                  # opens the browser to authorise
-npx wrangler d1 create garmin-health-monitor        # prints a database_id
 ```
 
-Copy the printed `database_id` into `worker/wrangler.jsonc` (replace the `0000...` placeholder), commit and push that change to a branch and merge it (the id is not a secret).
+The database already exists and its id is in `worker/wrangler.jsonc`. (It was created with `npx wrangler d1 create garmin-health-monitor`. If wrangler ever asks to add a binding to the config, answer **no**: the config already has one called `DB`.)
 
 ```powershell
 npm run db:migrate                                  # creates the tables in the real database
