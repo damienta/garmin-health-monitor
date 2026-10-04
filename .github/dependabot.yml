@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /collector
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /worker
+    schedule: { interval: monthly }
+    groups:
+      worker: { patterns: ["*"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

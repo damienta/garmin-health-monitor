@@ -19,3 +19,8 @@ uv run pytest -v                         # 22 offline tests
 - Setup guide: [`docs/GARMIN_SETUP.md`](docs/GARMIN_SETUP.md)
 - How the code works: [`docs/explained/day-1-garmin.md`](docs/explained/day-1-garmin.md)
 - What to record after your first real run: [`docs/garmin-findings.md`](docs/garmin-findings.md)
+
+**Day 2: backend.** A Cloudflare Worker + D1 database stores each night, and a GitHub Action runs `sleep-collector run` every day at 09:23 UTC.
+
+- Go live: [`docs/SETUP.md`](docs/SETUP.md)
+- How it works: [`docs/explained/day-2a-worker.md`](docs/explained/day-2a-worker.md), [`day-2b-collector-push.md`](docs/explained/day-2b-collector-push.md), [`day-2c-automation.md`](docs/explained/day-2c-automation.md)

@@ -1,0 +1,105 @@
+name: collect
+
+on:
+  schedule:
+    # Once a day at 09:23 UTC (10:23 in summer, 09:23 in winter, UK).
+    # Odd minute: GitHub delays :00 schedules when busy. Each run re-fetches 3 days,
+    # so a late watch sync or a skipped run is picked up the next morning.
+    - cron: "23 9 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days to fetch (backfill)"
+        default: "3"
+      reseed:
+        description: "Use the GARMIN_TOKENS secret instead of cached tokens (after a fresh login)"
+        type: boolean
+        default: false
+
+# Never run two at once: both would refresh the same rotating refresh token.
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Relative to the workspace (hashFiles and the cache action need that). Never committed.
+  TOKEN_FILE: .garmin/garmin_tokens.json
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: collector/uv.lock
+
+      # Every run refreshes the tokens and saves the newest file here, so it carries over
+      # to the next run. In our test Garmin did not rotate the refresh token, but if it
+      # ever starts to, this keeps the chain alive. A unique key per run (cache entries
+      # can't be overwritten) plus a prefix restore always picks up the latest one.
+      - name: Restore Garmin tokens
+        id: tokens
+        if: ${{ !inputs.reseed }}
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.TOKEN_FILE }}
+          key: garmin-tokens-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: garmin-tokens-
+
+      - name: Seed tokens from secret
+        if: ${{ inputs.reseed || steps.tokens.outputs.cache-matched-key == '' }}
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+        run: |
+          test -n "$GARMIN_TOKENS" || { echo "::error::GARMIN_TOKENS secret is empty"; exit 1; }
+          mkdir -p "$GITHUB_WORKSPACE/.garmin"
+          printf '%s' "$GARMIN_TOKENS" > "$GITHUB_WORKSPACE/$TOKEN_FILE"
+
+      - name: Fetch and push
+        env:
+          INGEST_URL: ${{ secrets.INGEST_URL }}
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          INGEST_SOURCE: github-actions
+          DAYS: ${{ inputs.days || '3' }}
+        run: |
+          # Sundays: look back two weeks to catch anything older that was missed.
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = 7 ]; then DAYS=14; fi
+          uv run sleep-collector --tokenstore "$GITHUB_WORKSPACE/$TOKEN_FILE" run --days "$DAYS"
+
+      # Data is already pushed by now. Failing here just emails you (and alerts
+      # healthchecks.io) two weeks before the refresh token would run out.
+      - name: Check token expiry
+        run: |
+          uv run sleep-collector --tokenstore "$GITHUB_WORKSPACE/$TOKEN_FILE" inspect-tokens
+          uv run sleep-collector --tokenstore "$GITHUB_WORKSPACE/$TOKEN_FILE" check-tokens --warn-days 14 \
+            || { echo "::error::Garmin refresh token expires soon. Run sleep-collector login and reseed."; exit 1; }
+
+      # Save even if the push failed: the token may already have rotated, and losing
+      # the new one would break tomorrow's run.
+      - name: Save Garmin tokens
+        if: ${{ always() && hashFiles(env.TOKEN_FILE) != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.TOKEN_FILE }}
+          key: garmin-tokens-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # Dead man's switch: healthchecks.io emails you if no success ping arrives on time.
+      - name: Ping healthchecks.io
+        if: ${{ always() }}
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECK_URL }}
+          STATUS: ${{ job.status }}
+        run: |
+          [ -n "$HC_URL" ] || exit 0
+          if [ "$STATUS" = success ]; then curl -fsS -m 10 --retry 3 "$HC_URL" >/dev/null
+          else curl -fsS -m 10 --retry 3 "$HC_URL/fail" >/dev/null; fi
