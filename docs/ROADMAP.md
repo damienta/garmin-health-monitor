@@ -4,7 +4,7 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 | Day | Slice | State |
 | --- | --- | --- |
-| 1 | Garmin connection (collector) | **Done** (see `docs/garmin-findings.md`) |
+| 1 | Garmin connection (collector) | **Done** |
 | 2 | Backend: Worker + D1, daily GitHub Action, healthchecks.io | In review (then `docs/SETUP.md` to go live) |
 | 3 | Grafana dashboards and alert | Not started |
 | 4 | Frontend (React on the Worker, behind Cloudflare Access) | Not started |
@@ -22,7 +22,7 @@ Built one slice at a time. Each day ends with something that works on its own. T
 **Done when:**
 1. CI is green.
 2. On your laptop, `fetch --days 14` matches the Garmin app for 2 or 3 nights.
-3. The token results are written down in `docs/garmin-findings.md` (how long tokens last, whether the refresh token rotates).
+3. You know how long the tokens last and whether the refresh token rotates.
 
 **You learn:** Python packaging with uv, OAuth access/refresh tokens, working with an unofficial API safely, contract testing.
 
@@ -58,4 +58,4 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 ## Agent prompt for each day
 
-> Read `CLAUDE.md` and `docs/ROADMAP.md`. Do Day N only, using the spike repo as the reference. One PR, tests passing, explain the code in the PR and in `docs/explained/day-N-*.md`. Update the table above.
+> Read `CLAUDE.md` and `docs/ROADMAP.md`. Do Day N only, using the spike repo as the reference. One PR, tests passing, explain the code in the PR. Update the table above.

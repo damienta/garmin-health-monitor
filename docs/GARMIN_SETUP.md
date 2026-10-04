@@ -45,8 +45,6 @@ uv run sleep-collector fetch --days 14
 
 One line per night: duration, score, HRV, resting HR, number of stage blocks. Open the Garmin app and compare 2 or 3 nights. Raw JSON lands in `collector/data/raw/` (gitignored).
 
-Record what you see in [`garmin-findings.md`](garmin-findings.md).
-
 ## Windows notes
 
 - Use **PowerShell**. Every `uv run ...` command works the same.
