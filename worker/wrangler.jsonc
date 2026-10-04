@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "garmin-health-monitor",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-15",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "garmin-health-monitor",
+      // Replace with the id printed by `npx wrangler d1 create garmin-health-monitor`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // Secrets (set with `npx wrangler secret put <NAME>`, or .dev.vars locally):
+  //   INGEST_TOKEN  collector -> POST /api/ingest
+  //   READ_TOKEN    Grafana (Day 3) and you -> GET /api/*
+}
