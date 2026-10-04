@@ -25,7 +25,7 @@ uv sync
 uv run sleep-collector login
 ```
 
-Tokens are saved to `~/.garminconnect/garmin_tokens.json` with owner-only permissions.
+Tokens are saved to `~/.garminconnect/garmin_tokens.json` (on Windows: `C:\Users\<you>\.garminconnect\garmin_tokens.json`). On macOS/Linux the file is set to owner-only (`600`); on Windows it is private because it sits in your user folder.
 
 **Treat that file like a password.** Anyone with it can read your Garmin data. Never commit it or paste it anywhere except, on Day 2, a GitHub secret.
 
@@ -46,6 +46,12 @@ uv run sleep-collector fetch --days 14
 One line per night: duration, score, HRV, resting HR, number of stage blocks. Open the Garmin app and compare 2 or 3 nights. Raw JSON lands in `collector/data/raw/` (gitignored).
 
 Record what you see in [`garmin-findings.md`](garmin-findings.md).
+
+## Windows notes
+
+- Use **PowerShell**. Every `uv run ...` command works the same.
+- After installing uv, close and reopen PowerShell so the `uv` command is found.
+- Paths use backslashes, e.g. raw JSON lands in `collector\data\raw\`.
 
 ## If something goes wrong
 
