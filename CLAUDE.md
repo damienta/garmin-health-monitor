@@ -25,4 +25,4 @@ cd worker && npm run typecheck && npm test      # Node 24 / npm 11
 - Stay on free, non-expiring plans (GitHub private repo, Cloudflare free, Grafana Cloud free, healthchecks.io free).
 - D1 free plan: 50 queries per Worker request. Each night is 1 write (stages stored as JSON), so keep `MAX_NIGHTS_PER_REQUEST` at 20 or below.
 - New SQL goes in a new numbered file in `worker/migrations/`. Never edit an applied migration.
-- One slice per PR. Keep PRs reviewable; explain the code in the PR body and in `docs/explained/`.
+- One slice per PR. Keep PRs reviewable; explain the code in the PR body.

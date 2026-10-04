@@ -13,9 +13,11 @@ cd collector
 uv sync
 uv run sleep-collector login            # once, on your laptop
 uv run sleep-collector fetch --days 14  # pull recent nights
-uv run pytest -v                         # 22 offline tests
+uv run pytest -v                         # offline tests
 ```
 
 - Setup guide: [`docs/GARMIN_SETUP.md`](docs/GARMIN_SETUP.md)
-- How the code works: [`docs/explained/day-1-garmin.md`](docs/explained/day-1-garmin.md)
-- What to record after your first real run: [`docs/garmin-findings.md`](docs/garmin-findings.md)
+
+**Day 2: backend.** A Cloudflare Worker + D1 database stores each night, and a GitHub Action runs `sleep-collector run` every day at 09:23 UTC.
+
+- Go live: [`docs/SETUP.md`](docs/SETUP.md)
