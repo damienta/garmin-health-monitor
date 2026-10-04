@@ -8,8 +8,8 @@
     {
       "binding": "DB",
       "database_name": "garmin-health-monitor",
-      // Replace with the id printed by `npx wrangler d1 create garmin-health-monitor`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Created with `npx wrangler d1 create garmin-health-monitor` (WEUR). Not a secret.
+      "database_id": "bba1524a-7d0e-44d4-ba02-751176e38ce4",
       "migrations_dir": "migrations"
     }
   ]
