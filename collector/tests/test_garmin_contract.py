@@ -1,5 +1,7 @@
 """Our assumptions about the pinned garminconnect library, checked against a fake Garmin."""
 
+import os
+import stat
 from datetime import date
 
 import pytest
@@ -87,7 +89,14 @@ def test_token_file_is_private_after_refresh(fake_garmin, token_path):
     token_path.chmod(0o644)
     api = garmin.connect(str(token_path))
     garmin.force_refresh(api, str(token_path))
-    assert token_path.stat().st_mode & 0o777 == 0o600
+    mode = token_path.stat().st_mode
+    if os.name == "nt":
+        # Windows ignores Unix permission bits (privacy comes from the user folder's
+        # access rules). chmod only toggles read-only, so check the file stays writable
+        # for the next refresh.
+        assert mode & stat.S_IWRITE
+    else:
+        assert mode & 0o777 == 0o600
 
 
 def test_fetch_range_pauses_between_requests_only(fake_garmin, token_path, monkeypatch):

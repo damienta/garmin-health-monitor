@@ -34,7 +34,12 @@ class TokensUnusable(RuntimeError):
 
 
 def _lock_down(path: Path) -> None:
-    """Make the token file readable by you only (like an SSH key)."""
+    """Make the token file readable by you only (like an SSH key).
+
+    On macOS/Linux this sets permissions to 600. Windows ignores those bits: the file
+    is private because it lives in your user folder (C:\\Users\\<you>), and chmod
+    there only clears the read-only flag.
+    """
     if path.exists():
         path.chmod(0o600)
 

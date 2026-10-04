@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   collector:
-    runs-on: ubuntu-latest
+    # Test on Windows too: the project is run from Windows laptops.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: collector
