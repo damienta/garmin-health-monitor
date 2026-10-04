@@ -1,0 +1,32 @@
+{
+  "_comment": "SYNTHETIC. Shape modelled on Garmin's dailySleepData response; values invented. Replace with a scrubbed real payload during the spike.",
+  "dailySleepDTO": {
+    "id": 1,
+    "calendarDate": "2026-09-30",
+    "sleepTimeSeconds": 26400,
+    "napTimeSeconds": 0,
+    "sleepWindowConfirmed": true,
+    "sleepStartTimestampGMT": 1790721600000,
+    "sleepEndTimestampGMT": 1790749200000,
+    "sleepStartTimestampLocal": 1790725200000,
+    "sleepEndTimestampLocal": 1790752800000,
+    "deepSleepSeconds": 5400,
+    "lightSleepSeconds": 14400,
+    "remSleepSeconds": 6600,
+    "awakeSleepSeconds": 1200,
+    "averageRespirationValue": 14.5,
+    "avgSleepStress": 17.0,
+    "awakeCount": 2,
+    "sleepScores": {"overall": {"value": 81, "qualifierKey": "GOOD"}}
+  },
+  "sleepLevels": [
+    {"startGMT": "2026-09-29T22:40:00.0", "endGMT": "2026-09-29T23:40:00.0", "activityLevel": 1.0},
+    {"startGMT": "2026-09-29T23:40:00.0", "endGMT": "2026-09-30T01:10:00.0", "activityLevel": 0.0},
+    {"startGMT": "2026-09-30T01:10:00.0", "endGMT": "2026-09-30T01:30:00.0", "activityLevel": 3.0},
+    {"startGMT": "2026-09-30T01:30:00.0", "endGMT": "2026-09-30T03:20:00.0", "activityLevel": 2.0}
+  ],
+  "restingHeartRate": 48,
+  "avgOvernightHrv": 62.0,
+  "hrvStatus": "BALANCED",
+  "bodyBatteryChange": 54
+}
