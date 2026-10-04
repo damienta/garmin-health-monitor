@@ -18,3 +18,4 @@ garmin_tokens.json
 *.tokens.json
 .garmin/
 data/
+wrangler.log

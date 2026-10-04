@@ -2,6 +2,8 @@
 
 Each ``cmd_*`` function is one command. They return a process exit code:
 0 = OK, 2 = tokens unusable (log in again), 3 = refresh token expires soon.
+
+``run`` is the daily job: refresh tokens, fetch recent nights, send them to the Worker.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import garmin
+from . import garmin, push
 from .parse import parse_sleep
 from .tokens import load_token_infos, refresh_expiring_within
 
@@ -87,6 +89,44 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ingest_env() -> tuple[str, str]:
+    """Where to send data, and the password for it. Set as env vars (GitHub secrets in CI)."""
+    url, token = os.environ.get("INGEST_URL"), os.environ.get("INGEST_TOKEN")
+    if not url or not token:
+        raise SystemExit("ERROR: set INGEST_URL and INGEST_TOKEN")
+    return url, token
+
+
+def _push_all(raw: dict[str, dict], source: str, url: str, token: str) -> int:
+    """Send nights in chunks the Worker accepts. Returns how many nights were sent."""
+    sent = 0
+    for body in push.build_batches(raw, source):
+        push.push(url, token, body)
+        sent += len(body["nights"])
+    return sent
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    """Daily job: refresh tokens, fetch recent nights, push them to the Worker."""
+    url, token = _ingest_env()
+    api = garmin.connect(args.tokenstore)
+    # Refresh first, before anything else can fail, so the token file is always the newest.
+    garmin.force_refresh(api, args.tokenstore)
+    raw = garmin.fetch_range(api, args.days)
+    sent = _push_all(raw, args.source, url, token)
+    print(f"Fetched {len(raw)} days, pushed {sent} nights")
+    return 0
+
+
+def cmd_push_dir(args: argparse.Namespace) -> int:
+    """Push JSON files saved earlier by `fetch`, without calling Garmin."""
+    url, token = _ingest_env()
+    raw = {p.stem: json.loads(p.read_text()) for p in sorted(Path(args.dir).glob("sleep*.json"))}
+    sent = _push_all(raw, args.source, url, token)
+    print(f"Read {len(raw)} files, pushed {sent} nights")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="sleep-collector")
     p.add_argument("--tokenstore", default=DEFAULT_TOKENSTORE, help="token dir or .json file")
@@ -102,6 +142,13 @@ def main(argv: list[str] | None = None) -> int:
     f.add_argument("--days", type=int, default=7)
     f.add_argument("--out", default="data/raw")
 
+    r = sub.add_parser("run", help="daily job: refresh, fetch, push (needs INGEST_URL/TOKEN)")
+    r.add_argument("--days", type=int, default=3)
+    r.add_argument("--source", default=os.environ.get("INGEST_SOURCE", "local"))
+    d = sub.add_parser("push-dir", help="push saved raw JSON files to the Worker")
+    d.add_argument("dir", nargs="?", default="data/raw")
+    d.add_argument("--source", default=os.environ.get("INGEST_SOURCE", "local"))
+
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
     handlers = {
@@ -110,6 +157,8 @@ def main(argv: list[str] | None = None) -> int:
         "check-tokens": cmd_check,
         "refresh": cmd_refresh,
         "fetch": cmd_fetch,
+        "run": cmd_run,
+        "push-dir": cmd_push_dir,
     }
     try:
         return handlers[args.cmd](args)
