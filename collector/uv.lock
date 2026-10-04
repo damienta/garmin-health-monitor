@@ -555,6 +555,7 @@ source = { editable = "." }
 dependencies = [
     { name = "garminconnect" },
     { name = "pydantic" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
@@ -567,6 +568,7 @@ dev = [
 requires-dist = [
     { name = "garminconnect", specifier = "==0.3.2" },
     { name = "pydantic", specifier = ">=2.7" },
+    { name = "requests", specifier = ">=2.31" },
 ]
 
 [package.metadata.requires-dev]

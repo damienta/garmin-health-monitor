@@ -46,3 +46,42 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  # The real collector code sends data to the real Worker running locally under
+  # wrangler dev. Catches the Python Night model and the Worker's Zod schema drifting apart.
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: collector/uv.lock
+      - name: Start Worker
+        working-directory: worker
+        run: |
+          npm ci
+          cp .dev.vars.example .dev.vars
+          npm run db:migrate:local
+          nohup npx wrangler dev --port 8787 > wrangler.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null -H "Authorization: Bearer dev-read-token" localhost:8787/api/health && exit 0
+            sleep 1
+          done
+          cat wrangler.log; exit 1
+      - name: Run e2e tests
+        working-directory: collector
+        env:
+          E2E_URL: http://localhost:8787
+        run: |
+          uv sync --locked
+          uv run pytest tests/e2e -v
+      - if: failure()
+        run: cat worker/wrangler.log
