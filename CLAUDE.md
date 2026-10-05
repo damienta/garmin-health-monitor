@@ -8,7 +8,8 @@ Reference implementation (all slices, already tested): https://github.com/damien
 
 - `collector/` Python 3.11, uv. Talks to Garmin. All Garmin calls live in `garmin.py`.
 - `worker/` Cloudflare Worker (Hono, TypeScript, Zod) and D1 database. `src/schema.ts` mirrors `Night` in `collector/src/sleep_collector/parse.py`: change both together.
-- Later days add `grafana/` and a frontend.
+- `grafana/sleep-dashboard.json` importable dashboard (Infinity data source). `collector/tests/e2e/test_grafana_dashboard.py` checks every panel query against the Worker: keep it passing when changing either.
+- Day 4 may add a frontend.
 
 ## Checks (run before every push)
 

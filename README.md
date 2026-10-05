@@ -21,3 +21,7 @@ uv run pytest -v                         # offline tests
 **Day 2: backend.** A Cloudflare Worker + D1 database stores each night, and a GitHub Action runs `sleep-collector run` every day at 09:23 UTC.
 
 - Go live: [`docs/SETUP.md`](docs/SETUP.md)
+
+**Day 3: Grafana.** An importable dashboard (`grafana/sleep-dashboard.json`) reads the Worker's API: last night's numbers and sleep stages, plus score, time asleep and HRV trends with 7-night averages.
+
+- Set up: [`docs/GRAFANA_SETUP.md`](docs/GRAFANA_SETUP.md)
