@@ -24,4 +24,3 @@ uv run pytest -v                         # offline tests
 
 **Day 3: Grafana.** An importable dashboard (`grafana/sleep-dashboard.json`) reads the Worker's API: last night's numbers and sleep stages, plus score, time asleep and HRV trends with 7-night averages.
 
-- Set up: [`docs/GRAFANA_SETUP.md`](docs/GRAFANA_SETUP.md)
