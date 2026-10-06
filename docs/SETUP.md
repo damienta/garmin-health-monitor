@@ -73,6 +73,7 @@ Repo → **Settings → Secrets and variables → Actions**.
 | `HEALTHCHECK_URL` | The healthchecks.io ping URL |
 | `CLOUDFLARE_API_TOKEN` | The API token from step 1 |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
+| `DISCORD_WEBHOOK_URL` | Optional. A Discord channel webhook (channel → Edit → Integrations → Webhooks → New → Copy URL). Morning message with last night, and a ❌ if a run fails |
 
 **Variables** tab → *New repository variable*: `CLOUDFLARE_DEPLOY` = `true` (turns on automatic Worker deploys).
 
