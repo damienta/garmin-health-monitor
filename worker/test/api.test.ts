@@ -46,9 +46,16 @@ describe("reads", () => {
       source: "t",
       nights: [night("2026-09-29", { stages: [{ start_ts: 1, end_ts: 2, stage: "rem" }] }), night()],
     });
-    const stages = (await (await call("/api/stages/latest", { headers: READ })).json()) as { date: string }[];
+    const stages = (await (await call("/api/stages/latest", { headers: READ })).json()) as {
+      date: string;
+      time: number;
+      time_end: number;
+      stage: string | null;
+    }[];
     expect(new Set(stages.map((s) => s.date))).toEqual(new Set(["2026-09-30"]));
-    expect(stages).toHaveLength(2);
+    expect(stages).toHaveLength(3); // two stages plus the closing null row
+    const [prev, end] = stages.slice(-2);
+    expect(end).toMatchObject({ stage: null, time: prev.time_end });
   });
 
   it("computes bedtime relative to local midnight", async () => {

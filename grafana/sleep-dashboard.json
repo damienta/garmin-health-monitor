@@ -585,7 +585,8 @@
         "mergeValues": true,
         "rowHeight": 0.8
       },
-      "description": "Always the most recent night, whatever the time range above."
+      "description": "Always the most recent night, over the last 24 hours (ignores the time picker).",
+      "timeFrom": "24h"
     },
     {
       "id": 8,

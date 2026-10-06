@@ -115,7 +115,10 @@ app.get("/api/stages/latest", read, async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT date, start_ts * 1000 AS time, end_ts * 1000 AS time_end, stage
      FROM sleep_stages WHERE date = (SELECT MAX(date) FROM sleep_nights) ORDER BY start_ts`,
-  ).all();
+  ).all<{ date: string; time: number; time_end: number; stage: string | null }>();
+  // Grafana stretches the last stage to the edge of the chart. A null row at wake-up ends it.
+  const last = results.at(-1);
+  if (last) results.push({ ...last, time: last.time_end, stage: null });
   return c.json(results);
 });
 
