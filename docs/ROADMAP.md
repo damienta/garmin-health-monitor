@@ -6,7 +6,7 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | --- | --- | --- |
 | 1 | Garmin connection (collector) | **Done** |
 | 2 | Backend: Worker + D1, daily GitHub Action, healthchecks.io | **Done** (live) |
-| 3 | Grafana dashboards and alert | In review (then `docs/GRAFANA_SETUP.md`) |
+| 3 | Grafana dashboards and alert | Done |
 | 4 | Frontend (React on the Worker, behind Cloudflare Access) | Not started |
 | then | Let it run for a week; fix what breaks | |
 
