@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The website. A separate Worker from the API, so Cloudflare Access can lock this one
+  // down without blocking the collector and Grafana, which call the API directly.
+  "name": "garmin-health-monitor-web",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-15",
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    // Only /api/* runs the Worker code; everything else is the built React app.
+    "run_worker_first": ["/api/*"]
+  },
+  // Calls the API Worker directly inside Cloudflare (a Worker can't fetch another
+  // workers.dev URL on the same account).
+  "services": [{ "binding": "API", "service": "garmin-health-monitor" }]
+  // Secrets (Cloudflare dashboard → this Worker → Settings → Variables and Secrets):
+  //   READ_TOKEN   same value as the API Worker's READ_TOKEN
+  //   TEAM_DOMAIN  https://<team>.cloudflareaccess.com   (shown when you enable Access)
+  //   POLICY_AUD   the Access application's AUD tag      (shown when you enable Access)
+}

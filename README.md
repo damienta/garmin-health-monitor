@@ -24,3 +24,12 @@ uv run pytest -v                         # offline tests
 
 **Day 3: Grafana.** An importable dashboard (`grafana/sleep-dashboard.json`) reads the Worker's API: last night's numbers and sleep stages, plus score, time asleep and HRV trends with 7-night averages.
 
+
+**Day 4: frontend.** `web/` is a React + TypeScript page served by its own Worker behind Cloudflare Access. It shows the sleep score trend; the Worker adds the read token server-side, so the browser never sees it.
+
+```bash
+cd web
+npm ci
+npm run dev      # http://localhost:5173, uses the API Worker on localhost:8787 (npm run dev in worker/)
+npm test
+```

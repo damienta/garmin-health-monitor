@@ -6,9 +6,11 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | --- | --- | --- |
 | 1 | Garmin connection (collector) | **Done** |
 | 2 | Backend: Worker + D1, daily GitHub Action, healthchecks.io | **Done** (live) |
-| 3 | Grafana dashboards and alert | Done |
-| 4 | Frontend (React on the Worker, behind Cloudflare Access) | Not started |
-| then | Let it run for a week; fix what breaks | |
+| 3 | Grafana dashboards and alert | **Done** |
+| 4 | Frontend skeleton behind Cloudflare Access (one trends chart), daily Discord ping, Grafana alerts to Discord | In progress |
+| 5 | Frontend proper (last night card, stages chart, trends), Grafana code monitoring | Not started |
+| 6 | More Garmin data (steps, stress, Body Battery, training) | Not started |
+| 7 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | Not started |
 
 ## Day 1: Garmin connection
 
@@ -47,14 +49,30 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 **Done when:** a month of your sleep is on the dashboard and the alert fires in a test.
 
-## Day 4: Frontend (optional)
+## Day 4: Frontend skeleton and Discord
 
-**Goal:** your own page for last night and trends.
+**Goal:** your own private page, and a phone ping every morning.
 
-- React + Vite + Tailwind served by the same Worker
-- Cloudflare Access in front (free, no login code to write)
+- `web/`: React + TypeScript (Vite) served by a second Worker, `garmin-health-monitor-web`
+- That Worker's `/api/*` checks the Cloudflare Access JWT, then calls the API Worker through a service binding with `READ_TOKEN`. The browser never holds a token
+- One chart: sleep score with its 7-night average
+- Daily Discord message after each collect run (and on failure); Grafana alerts to Discord
 
-**Done when:** your URL shows last night after you log in.
+**Done when:** your web URL asks for your email, then shows the chart; Discord gets last night's numbers each morning.
+
+## Day 5: Frontend proper, code monitoring
+
+- Last night card, stages chart, trends (score, duration, HRV + resting HR)
+- Grafana panels for the system itself: Worker requests and errors, daily job history
+
+## Day 6: More Garmin data
+
+- Steps, stress, Body Battery, training load: collector, new migration, API, charts
+
+## Day 7: Last night and All time
+
+- Last night page with a written summary generated from the numbers (no AI)
+- All time page: best and worst score with dates, averages, streaks, bedtime consistency chart
 
 ## Agent prompt for each day
 

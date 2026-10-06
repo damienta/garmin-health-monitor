@@ -47,6 +47,23 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   # The real collector code sends data to the real Worker running locally under
   # wrangler dev. Catches the Python Night model and the Worker's Zod schema drifting apart.
   e2e:
