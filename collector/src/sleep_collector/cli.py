@@ -16,7 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import garmin, push
+from . import garmin, notify, push
 from .parse import parse_sleep
 from .tokens import load_token_infos, refresh_expiring_within
 
@@ -115,7 +115,25 @@ def cmd_run(args: argparse.Namespace) -> int:
     raw = garmin.fetch_range(api, args.days)
     sent = _push_all(raw, args.source, url, token)
     print(f"Fetched {len(raw)} days, pushed {sent} nights")
+    _notify(raw)
     return 0
+
+
+def _notify(raw: dict[str, dict]) -> None:
+    """Post the newest night to Discord if DISCORD_WEBHOOK_URL is set.
+
+    Runs after the data is saved, and a Discord problem never fails the run.
+    """
+    webhook = os.environ.get("DISCORD_WEBHOOK_URL")
+    if not webhook or not raw:
+        return
+    nights = [n for n in (parse_sleep(p) for p in raw.values()) if n is not None]
+    latest = max(nights, key=lambda n: n.date, default=None)
+    try:
+        notify.post_discord(webhook, notify.night_message(latest, expected=max(raw)))
+    except Exception as e:
+        # Only the error type: the message would include the webhook URL, which is a secret.
+        print(f"WARNING: Discord message not sent: {type(e).__name__}", file=sys.stderr)
 
 
 def cmd_push_dir(args: argparse.Namespace) -> int:

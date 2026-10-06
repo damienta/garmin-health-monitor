@@ -70,6 +70,8 @@ jobs:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
           INGEST_SOURCE: github-actions
+          # Optional: morning message with last night's numbers (skipped if unset).
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DAYS: ${{ inputs.days || '3' }}
         run: |
           # Sundays: look back two weeks to catch anything older that was missed.
@@ -103,3 +105,14 @@ jobs:
           [ -n "$HC_URL" ] || exit 0
           if [ "$STATUS" = success ]; then curl -fsS -m 10 --retry 3 "$HC_URL" >/dev/null
           else curl -fsS -m 10 --retry 3 "$HC_URL/fail" >/dev/null; fi
+
+      # Phone ping when anything above failed, with a link to the log.
+      - name: Tell Discord the run failed
+        if: ${{ failure() }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$DISCORD_WEBHOOK_URL" ] || exit 0
+          printf '{"content":"❌ Sleep collection failed. Log: %s"}' "$RUN_URL" \
+            | curl -fsS -m 10 --retry 3 -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL" >/dev/null
