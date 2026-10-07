@@ -7,7 +7,6 @@ import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
 import { LastNight } from "./components/LastNight";
 import { RangePicker, type Range } from "./components/RangePicker";
-import { ago } from "./format";
 import { useLoad, type Loaded } from "./useApi";
 
 export function App() {
@@ -18,22 +17,10 @@ export function App() {
 
   return (
     <main>
-      <header className="header">
-        <div>
-          <h1>Sleep</h1>
-          <p>
-            {health.kind === "ready" && health.data.last_ingest_age_h != null
-              ? `Updated ${ago(health.data.last_ingest_age_h)}`
-              : " "}
-          </p>
-        </div>
-      </header>
-
       {health.kind === "error" && <p className="error">Couldn't reach the API: {health.message}</p>}
       {health.kind === "ready" && health.data.latest_night && <LastNight date={health.data.latest_night} />}
 
       <div className="section-head">
-        <h2>Trends</h2>
         <RangePicker value={range} onChange={setRange} />
       </div>
 
