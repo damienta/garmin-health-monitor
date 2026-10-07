@@ -7,10 +7,11 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | 1 | Garmin connection (collector) | **Done** |
 | 2 | Backend: Worker + D1, daily GitHub Action, healthchecks.io | **Done** (live) |
 | 3 | Grafana dashboards and alert | **Done** |
-| 4 | Frontend skeleton behind Cloudflare Access (one trends chart), daily Discord ping, Grafana alerts to Discord | In progress |
-| 5 | Frontend proper (last night card, stages chart, trends), Grafana code monitoring | Not started |
-| 6 | More Garmin data (steps, stress, Body Battery, training) | Not started |
-| 7 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | Not started |
+| 4 | Frontend skeleton behind Cloudflare Access (one trends chart), daily Discord ping, Grafana alerts to Discord | **Done** |
+| 5 | Frontend proper: minimal design, last night card and stages, more trend charts | In progress |
+| 6 | Grafana code monitoring | Not started |
+| 7 | More Garmin data (steps, stress, Body Battery, training) | Not started |
+| 8 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | Not started |
 
 ## Day 1: Garmin connection
 
@@ -60,16 +61,22 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 **Done when:** your web URL asks for your email, then shows the chart; Discord gets last night's numbers each morning.
 
-## Day 5: Frontend proper, code monitoring
+## Day 5: Frontend proper
 
-- Last night card, stages chart, trends (score, duration, HRV + resting HR)
+- Minimal design system (see `CLAUDE.md` → Frontend design), 7/30/90-night range picker
+- Last night: score, time asleep, stage split, vitals vs your 7-night average, stages timeline
+- Trends: score, time asleep, stage mix per night, HRV, resting HR
+
+## Day 6: Grafana code monitoring
+
 - Grafana panels for the system itself: Worker requests and errors, daily job history
+- Discord alert when the API starts erroring
 
-## Day 6: More Garmin data
+## Day 7: More Garmin data
 
 - Steps, stress, Body Battery, training load: collector, new migration, API, charts
 
-## Day 7: Last night and All time
+## Day 8: Last night and All time
 
 - Last night page with a written summary generated from the numbers (no AI)
 - All time page: best and worst score with dates, averages, streaks, bedtime consistency chart
