@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { niceRange } from "../src/charts/scale";
 import { ago, longDate, shortDate } from "../src/format";
 
 describe("shortDate", () => {
@@ -23,5 +24,13 @@ describe("ago", () => {
     [72, "3 days ago"],
   ])("%s hours -> %s", (h, text) => {
     expect(ago(h)).toBe(text);
+  });
+});
+
+describe("niceRange", () => {
+  it("pads and snaps to round ticks", () => {
+    expect(niceRange([48, 52, 55])).toEqual({ domain: [45, 60], ticks: [45, 50, 55, 60] });
+    expect(niceRange([31, 62])).toEqual({ domain: [20, 70], ticks: [20, 30, 40, 50, 60, 70] });
+    expect(niceRange([null])).toEqual({ domain: [0, 10], ticks: [0, 5, 10] });
   });
 });

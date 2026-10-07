@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Night, TrendRow } from "../src/api";
-import { baseline, clock, hm, stageSplit } from "../src/sleep";
+import { baseline, clock, hm, rolling7, stageSplit } from "../src/sleep";
 
 const row = (date: string, score: number, extra: Partial<TrendRow> = {}): TrendRow => ({
   date,
@@ -62,5 +62,12 @@ describe("stageSplit", () => {
       ["rem", 0.25],
       ["awake", 0],
     ]);
+  });
+});
+
+describe("rolling7", () => {
+  it("averages each row with up to 6 before it, skipping gaps", () => {
+    const xs = [1, 2, 3, 4, 5, 6, 7, 8, null];
+    expect(rolling7(xs, (x) => x)).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 5.5]);
   });
 });
