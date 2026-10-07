@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: collector
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -36,7 +36,7 @@ jobs:
       run:
         working-directory: worker
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           # Node 24 ships npm 11; npm 10 fails to install @cloudflare/vitest-pool-workers.
@@ -53,7 +53,7 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -71,7 +71,7 @@ jobs:
     env:
       WRANGLER_SEND_METRICS: "false"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
