@@ -20,3 +20,13 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export const getTrends = (days: number) => get<TrendRow[]>(`/api/trends?days=${days}`);
+
+/** GET /api/health: when data last arrived. */
+export interface Health {
+  ok: boolean;
+  last_ingest_at: number | null;
+  last_ingest_age_h: number | null;
+  latest_night: string | null;
+}
+
+export const getHealth = () => get<Health>("/api/health");

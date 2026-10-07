@@ -10,6 +10,7 @@
     "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
+    "@react-spring/web": "^10.1.2",
     "jose": "^6.2.12",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
