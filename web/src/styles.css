@@ -75,30 +75,6 @@ main {
   gap: 16px;
 }
 
-/* ---------- header ---------- */
-
-.header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-
-.header p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 0.875rem;
-}
-
 /* ---------- cards ---------- */
 
 .card {
@@ -440,15 +416,8 @@ main {
 .section-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 24px;
-}
-
-.section-head h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
 }
