@@ -30,3 +30,30 @@ export interface Health {
 }
 
 export const getHealth = () => get<Health>("/api/health");
+
+export type StageName = "deep" | "light" | "rem" | "awake";
+
+export interface Stage {
+  start_ts: number; // epoch seconds
+  end_ts: number;
+  stage: StageName | "unknown";
+}
+
+/** One night from GET /api/nights/:date, including its stages. */
+export interface Night {
+  date: string;
+  start_ts: number;
+  end_ts: number;
+  tz_offset_min: number;
+  duration_s: number;
+  deep_s: number | null;
+  light_s: number | null;
+  rem_s: number | null;
+  awake_s: number | null;
+  score: number | null;
+  resting_hr: number | null;
+  hrv_avg: number | null;
+  stages: Stage[];
+}
+
+export const getNight = (date: string) => get<Night>(`/api/nights/${date}`);
