@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: collector/uv.lock
@@ -50,7 +50,7 @@ jobs:
       - name: Restore Garmin tokens
         id: tokens
         if: ${{ !inputs.reseed }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.TOKEN_FILE }}
           key: garmin-tokens-${{ github.run_id }}-${{ github.run_attempt }}
@@ -90,7 +90,7 @@ jobs:
       # the new one would break tomorrow's run.
       - name: Save Garmin tokens
         if: ${{ always() && hashFiles(env.TOKEN_FILE) != '' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.TOKEN_FILE }}
           key: garmin-tokens-${{ github.run_id }}-${{ github.run_attempt }}
