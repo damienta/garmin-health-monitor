@@ -2,6 +2,7 @@ import { useState } from "react";
 import { getHealth, getTrends } from "./api";
 import { ScoreChart } from "./charts/ScoreChart";
 import { Card } from "./components/Card";
+import { LastNight } from "./components/LastNight";
 import { RangePicker, type Range } from "./components/RangePicker";
 import { ago } from "./format";
 import { useLoad } from "./useApi";
@@ -25,7 +26,9 @@ export function App() {
         <RangePicker value={range} onChange={setRange} />
       </header>
 
-      <Card title="Sleep score" aside={<span className="sub">Last {range} nights</span>}>
+      {health.kind === "ready" && health.data.latest_night && <LastNight date={health.data.latest_night} />}
+
+      <Card title="Sleep score" delay={180} aside={<span className="sub">Last {range} nights</span>}>
         {trends.kind === "loading" && <div className="skeleton" style={{ height: 260 }} />}
         {trends.kind === "error" && <p className="error">Couldn't load data: {trends.message}</p>}
         {trends.kind === "ready" && trends.data.length === 0 && <p className="muted">No nights in this range yet.</p>}
