@@ -1,7 +1,8 @@
-import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
+import { ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip } from "recharts";
 import type { TrendRow } from "../api";
 import { Tip } from "../components/Tooltip";
-import { longDate, shortDate } from "../format";
+import { longDate } from "../format";
+import { cursorLine, grid, xAxis, yAxis } from "./axes";
 
 /** Nightly score as quiet dots, the 7-night average as the one strong line. */
 export function ScoreChart({ rows }: { rows: TrendRow[] }) {
@@ -9,25 +10,11 @@ export function ScoreChart({ rows }: { rows: TrendRow[] }) {
     <>
       <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-          <CartesianGrid stroke="var(--grid)" vertical={false} />
-          <XAxis
-            dataKey="date"
-            tickFormatter={shortDate}
-            stroke="var(--axis)"
-            tick={{ fill: "var(--muted)", fontSize: 12 }}
-            tickLine={false}
-            minTickGap={32}
-          />
-          <YAxis
-            domain={[40, 100]}
-            ticks={[40, 60, 80, 100]}
-            stroke="var(--axis)"
-            tick={{ fill: "var(--muted)", fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
-          />
+          {grid()}
+          {xAxis()}
+          {yAxis({ domain: [40, 100], ticks: [40, 60, 80, 100] })}
           <Tooltip
-            cursor={{ stroke: "var(--axis)", strokeWidth: 1 }}
+            cursor={cursorLine}
             content={({ active, payload }) => {
               const row = payload?.[0]?.payload as TrendRow | undefined;
               if (!active || !row) return null;

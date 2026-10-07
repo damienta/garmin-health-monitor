@@ -58,3 +58,8 @@ export function stageSplit(n: Night) {
   const total = Object.values(secs).reduce((a, b) => a + b, 0);
   return STAGES.map((s) => ({ ...s, seconds: secs[s.key], share: total ? secs[s.key] / total : 0 }));
 }
+
+/** Trailing average over up to 7 rows (the row itself and the 6 before), like the API's. */
+export function rolling7<T>(rows: T[], value: (r: T) => number | null): (number | null)[] {
+  return rows.map((_, i) => mean(rows.slice(Math.max(0, i - 6), i + 1).map(value)));
+}
