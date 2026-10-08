@@ -8,6 +8,10 @@ updates:
     schedule: { interval: monthly }
     groups:
       worker: { patterns: ["*"] }
+    ignore:
+      # @cloudflare/vitest-pool-workers only supports vitest 4. Remove once it supports 5.
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
