@@ -500,3 +500,25 @@ main {
   color: var(--ink-2);
   max-width: 70ch;
 }
+
+/* ---------- records ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px 16px;
+}
+
+@media (max-width: 720px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tile-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
+}

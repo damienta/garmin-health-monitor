@@ -61,6 +61,11 @@ export const getNight = (date: string) => get<Night>(`/api/nights/${date}`);
 /** One night from GET /api/nights (no stages). */
 export interface NightRow {
   date: string;
+  start_ts: number;
+  end_ts: number;
+  tz_offset_min: number;
+  score: number | null;
+  bedtime_min: number | null;
   duration_s: number;
   deep_s: number | null;
   light_s: number | null;
