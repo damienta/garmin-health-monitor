@@ -9,23 +9,39 @@ import { StepsChart } from "./charts/StepsChart";
 import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
 import { LastNight } from "./components/LastNight";
+import { Nav } from "./components/Nav";
 import { RangePicker, type Range } from "./components/RangePicker";
 import { Workouts } from "./components/Workouts";
 import { useLoad, type Loaded } from "./useApi";
+import { useRoute } from "./useRoute";
 
 export function App() {
-  const [range, setRange] = useState<Range>(30);
+  const page = useRoute();
+  return (
+    <main>
+      <Nav page={page} />
+      {page === "night" ? <LastNightPage /> : <AllTime />}
+    </main>
+  );
+}
+
+function LastNightPage() {
   const health = useLoad(getHealth, "health");
+  if (health.kind === "loading") return <div className="skeleton" style={{ height: 320 }} />;
+  if (health.kind === "error") return <p className="error">Couldn't reach the API: {health.message}</p>;
+  if (!health.data.latest_night) return <p className="muted">No nights yet. They appear after the first daily run.</p>;
+  return <LastNight date={health.data.latest_night} />;
+}
+
+function AllTime() {
+  const [range, setRange] = useState<Range>(30);
   const trends = useLoad(() => getTrends(range), `trends-${range}`);
   const nights = useLoad(() => getNights(range), `nights-${range}`);
   const days = useLoad(() => getDays(range), `days-${range}`);
   const activities = useLoad(() => getActivities(range), `activities-${range}`);
 
   return (
-    <main>
-      {health.kind === "error" && <p className="error">Couldn't reach the API: {health.message}</p>}
-      {health.kind === "ready" && health.data.latest_night && <LastNight date={health.data.latest_night} />}
-
+    <>
       <div className="section-head">
         <RangePicker value={range} onChange={setRange} />
       </div>
@@ -77,7 +93,7 @@ export function App() {
           {(rows) => <Workouts rows={rows} />}
         </Body>
       </Card>
-    </main>
+    </>
   );
 }
 

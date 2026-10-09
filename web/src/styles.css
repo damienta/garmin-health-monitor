@@ -151,6 +151,26 @@ main {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+.segmented a {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.segmented a:hover {
+  color: var(--ink);
+}
+
+.segmented a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.segmented a:focus-visible,
 .segmented button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
@@ -419,7 +439,6 @@ main {
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 24px;
 }
 
 /* ---------- tables ---------- */
@@ -465,4 +484,19 @@ main {
 
 .small {
   font-size: 0.8125rem;
+}
+
+/* ---------- pages ---------- */
+
+.nav {
+  justify-self: start;
+  margin-bottom: 8px;
+}
+
+.prose {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 70ch;
 }

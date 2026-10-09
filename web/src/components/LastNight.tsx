@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { getNight, getTrends, type Night, type TrendRow } from "../api";
+import { type DayRow, getDays, getNight, getTrends, type Night, type TrendRow } from "../api";
 import { Hypnogram } from "../charts/Hypnogram";
 import { StageBar } from "../charts/StageBar";
 import { longDate } from "../format";
 import { baseline, clock, hm } from "../sleep";
+import { writeSummary } from "../summary";
 import { useLoad } from "../useApi";
 import { Card } from "./Card";
 import { CountUp } from "./CountUp";
@@ -12,7 +13,8 @@ import { Delta } from "./Delta";
 /** Last night in full: score, times, vitals against your usual, stage split and timeline. */
 export function LastNight({ date }: { date: string }) {
   const data = useLoad(
-    () => Promise.all([getNight(date), getTrends(14)]),
+    // Days can fail (older data has none) without hiding the night.
+    () => Promise.all([getNight(date), getTrends(14), getDays(14).catch(() => [] as DayRow[])]),
     `night-${date}`,
   );
 
@@ -30,16 +32,28 @@ export function LastNight({ date }: { date: string }) {
       </Card>
     );
   }
-  const [night, rows] = data.data;
+  const [night, rows, days] = data.data;
+  const dayBefore = days.find((d) => d.date === previousDate(night.date)) ?? null;
+  const sentences = writeSummary(night, baseline(rows, night.date), dayBefore);
   return (
     <>
       <Summary night={night} rows={rows} />
-      <Card title="Sleep stages" aside={<span className="sub">{longDate(night.date)}</span>} delay={120}>
+      <Card title="In short" delay={90}>
+        <p className="prose">{sentences.join(" ")}</p>
+      </Card>
+      <Card title="Sleep stages" aside={<span className="sub">{longDate(night.date)}</span>} delay={150}>
         <Hypnogram night={night} />
       </Card>
     </>
   );
 }
+
+/** "2026-10-07" -> "2026-10-06". */
+const previousDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
 
 function Summary({ night, rows }: { night: Night; rows: TrendRow[] }) {
   const usual = baseline(rows, night.date);
