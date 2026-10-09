@@ -7,7 +7,7 @@ Reference implementation (all slices, already tested): https://github.com/damien
 ## Layout
 
 - `collector/` Python 3.11, uv. Talks to Garmin. All Garmin calls live in `garmin.py`.
-- `worker/` Cloudflare Worker (Hono, TypeScript, Zod) and D1 database. `src/schema.ts` mirrors `Night` in `collector/src/sleep_collector/parse.py`: change both together.
+- `worker/` Cloudflare Worker (Hono, TypeScript, Zod) and D1 database. `src/schema.ts` mirrors `Night`, `Day` and `Activity` in `collector/src/sleep_collector/parse.py`: change both together.
 - `grafana/sleep-dashboard.json` importable dashboard (Infinity data source). `collector/tests/e2e/test_grafana_dashboard.py` checks every panel query against the Worker: keep it passing when changing either.
 - `web/` React + TypeScript (Vite) frontend, served by a second Worker (`garmin-health-monitor-web`). Its `worker/index.ts` checks the Cloudflare Access JWT, then calls the API Worker through a service binding with `READ_TOKEN`. Never put a token in browser code.
 

@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from . import garmin, notify, push
-from .parse import parse_sleep
+from .parse import parse_activity, parse_day, parse_sleep
 from .tokens import load_token_infos, refresh_expiring_within
 
 DEFAULT_TOKENSTORE = os.environ.get("GARMIN_TOKENSTORE", "~/.garminconnect")
@@ -69,9 +69,11 @@ def cmd_refresh(args: argparse.Namespace) -> int:
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
-    """Download recent nights, save the raw JSON, print one summary line per night."""
+    """Download recent nights, days and workouts, save the raw JSON, print a summary."""
     api = garmin.connect(args.tokenstore)
     raw = garmin.fetch_range(api, args.days)
+    stats = garmin.fetch_stats_range(api, args.days)
+    activities = garmin.fetch_activities(api, args.days)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     for day, payload in raw.items():
@@ -85,6 +87,18 @@ def cmd_fetch(args: argparse.Namespace) -> int:
             f"{day}  {h}h{m:02d}m  score={night.score}  hrv={night.hrv_avg}  "
             f"rhr={night.resting_hr}  stages={len(night.stages)}"
         )
+    for day, payload in stats.items():
+        (out / f"stats-{day}.json").write_text(json.dumps(payload, indent=2))
+        d = parse_day(payload)
+        if d is not None:
+            print(
+                f"{day}  steps={d.steps}  stress={d.stress_avg}  "
+                f"body_battery={d.bb_low}-{d.bb_high}  active_kcal={d.active_kcal}"
+            )
+    (out / "activities.json").write_text(json.dumps(activities, indent=2))
+    for a in (parse_activity(x) for x in activities):
+        mins = (a.duration_s or 0) // 60
+        print(f"{a.date}  {a.type}  {a.name}  {mins} min  load={a.training_load}")
     print(f"Raw JSON written to {out}/ (gitignored, contains personal data)")
     return 0
 
@@ -107,7 +121,7 @@ def _push_all(raw: dict[str, dict], source: str, url: str, token: str) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    """Daily job: refresh tokens, fetch recent nights, push them to the Worker."""
+    """Daily job: refresh tokens, fetch recent nights and days, push them to the Worker."""
     url, token = _ingest_env()
     api = garmin.connect(args.tokenstore)
     # Refresh first, before anything else can fail, so the token file is always the newest.
@@ -115,12 +129,21 @@ def cmd_run(args: argparse.Namespace) -> int:
     raw = garmin.fetch_range(api, args.days)
     sent = _push_all(raw, args.source, url, token)
     print(f"Fetched {len(raw)} days, pushed {sent} nights")
-    _notify(raw)
+    # Steps, stress, Body Battery and workouts. Sleep is already saved by now.
+    stats = garmin.fetch_stats_range(api, args.days)
+    activities = garmin.fetch_activities(api, args.days)
+    days_sent = acts_sent = 0
+    for body in push.build_daily_batches(stats, activities, args.source):
+        push.push(url, token, body, path="/api/ingest/daily")
+        days_sent += len(body["days"])
+        acts_sent += len(body["activities"])
+    print(f"Pushed {days_sent} days and {acts_sent} activities")
+    _notify(raw, stats)
     return 0
 
 
-def _notify(raw: dict[str, dict]) -> None:
-    """Post the newest night to Discord if DISCORD_WEBHOOK_URL is set.
+def _notify(raw: dict[str, dict], stats: dict[str, dict] | None = None) -> None:
+    """Post the newest night (and yesterday's activity) to Discord if DISCORD_WEBHOOK_URL is set.
 
     Runs after the data is saved, and a Discord problem never fails the run.
     """
@@ -129,8 +152,15 @@ def _notify(raw: dict[str, dict]) -> None:
         return
     nights = [n for n in (parse_sleep(p) for p in raw.values()) if n is not None]
     latest = max(nights, key=lambda n: n.date, default=None)
+    message = notify.night_message(latest, expected=max(raw))
+    # Yesterday = the last full day before the newest date fetched.
+    yesterday = sorted(d for d in (stats or {}) if d < max(raw))[-1:]
+    if yesterday:
+        day = parse_day(stats[yesterday[0]])
+        if day is not None:
+            message += "\n" + notify.day_line(day)
     try:
-        notify.post_discord(webhook, notify.night_message(latest, expected=max(raw)))
+        notify.post_discord(webhook, message)
     except Exception as e:
         # Only the error type: the message would include the webhook URL, which is a secret.
         print(f"WARNING: Discord message not sent: {type(e).__name__}", file=sys.stderr)

@@ -11,7 +11,12 @@ from sleep_collector import cli, garmin, push
 @pytest.fixture
 def sent(monkeypatch):
     bodies: list[dict] = []
-    monkeypatch.setattr(push, "push", lambda url, token, body: bodies.append(body) or {"ok": True})
+
+    def fake_push(url, token, body, path="/api/ingest"):
+        bodies.append({**body, "_path": path})
+        return {"ok": True}
+
+    monkeypatch.setattr(push, "push", fake_push)
     monkeypatch.setenv("INGEST_URL", "https://worker.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     monkeypatch.setattr(garmin, "REQUEST_GAP_S", 0)
@@ -25,9 +30,23 @@ def test_run_refreshes_fetches_and_pushes(fake_garmin, token_path, sent):
     assert fake_garmin.refresh_calls == 1
     assert read_tokens(token_path)["di_refresh_token"] == "refresh-1"
     # The fake returns the same night for every date; the Worker upserts by date.
-    (body,) = sent
-    assert body["source"] == "t" and len(body["nights"]) == 3
-    assert body["raw"][0]["kind"] == "sleep"
+    nights, days, activities = sent
+    assert nights["_path"] == "/api/ingest"
+    assert nights["source"] == "t" and len(nights["nights"]) == 3
+    assert nights["raw"][0]["kind"] == "sleep"
+    # Then steps/stress/Body Battery for each day, then workouts, to the daily endpoint.
+    assert days["_path"] == activities["_path"] == "/api/ingest/daily"
+    assert len(days["days"]) == 3 and days["raw"][0]["kind"] == "stats"
+    assert [a["type"] for a in activities["activities"]] == ["running", "walking"]
+
+
+def test_run_keeps_sleep_when_daily_stats_are_missing(fake_garmin, token_path, sent):
+    """Days the watch wasn't worn make Garmin error; that must not stop the run."""
+    fake_garmin.stats_payload = {"calendarDate": "2026-09-30"}  # nothing measured
+    fake_garmin.activities_payload = []
+    write_tokens(token_path, access_token(3600))
+    assert cli.main(["--tokenstore", str(token_path), "run", "--days", "2"]) == 0
+    assert [b["_path"] for b in sent] == ["/api/ingest"]
 
 
 def test_run_saves_rotated_token_even_if_push_fails(fake_garmin, token_path, sent, monkeypatch):

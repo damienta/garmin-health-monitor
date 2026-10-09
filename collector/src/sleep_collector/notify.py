@@ -10,7 +10,7 @@ from datetime import date
 
 import requests
 
-from .parse import Night
+from .parse import Day, Night
 
 
 def _hm(seconds: int | None) -> str:
@@ -47,6 +47,18 @@ def night_message(night: Night | None, expected: str) -> str:
     if night.date != expected:
         lines.append(f"⚠️ Nothing for {_day(expected)} yet (watch not synced?)")
     return "\n".join(lines)
+
+
+def day_line(day: Day) -> str:
+    """'👟 Tue 6 Oct: 9,412 steps · stress 31 · Body Battery 22-88'. Missing values skipped."""
+    parts = []
+    if day.steps is not None:
+        parts.append(f"{day.steps:,} steps")
+    if day.stress_avg is not None:
+        parts.append(f"stress {day.stress_avg}")
+    if day.bb_low is not None and day.bb_high is not None:
+        parts.append(f"Body Battery {day.bb_low}-{day.bb_high}")
+    return f"👟 {_day(day.date)}: " + (" · ".join(parts) or "no activity data")
 
 
 def post_discord(webhook_url: str, content: str) -> None:

@@ -13,7 +13,7 @@ import pytest
 import requests
 
 from sleep_collector import push
-from sleep_collector.parse import parse_sleep
+from sleep_collector.parse import parse_day, parse_sleep
 
 URL = os.environ.get("E2E_URL")
 INGEST = os.environ.get("E2E_INGEST_TOKEN", "dev-ingest-token")
@@ -55,3 +55,23 @@ def test_wrong_token_is_rejected():
     with pytest.raises(requests.HTTPError) as e:
         push.push(URL, "wrong", body)
     assert e.value.response.status_code == 401
+
+
+STATS = json.loads((Path(__file__).parents[1] / "fixtures" / "stats_synthetic.json").read_text())
+ACTIVITIES = json.loads(
+    (Path(__file__).parents[1] / "fixtures" / "activities_synthetic.json").read_text()
+)
+
+
+def test_daily_push_then_read_back():
+    bodies = list(push.build_daily_batches({"2026-09-30": STATS}, ACTIVITIES, "e2e"))
+    for body in bodies:
+        push.push(URL, INGEST, body, path="/api/ingest/daily")
+
+    (day,) = get("/api/days?from=2026-09-30&to=2026-09-30")
+    expected = parse_day(STATS).model_dump()
+    for key, value in expected.items():
+        assert day[key] == value, key
+
+    acts = get("/api/activities?from=2026-09-01&to=2026-09-30")
+    assert {a["name"] for a in acts} >= {"Evening Run", "Walk"}

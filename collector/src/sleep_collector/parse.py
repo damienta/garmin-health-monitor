@@ -147,3 +147,126 @@ def parse_sleep(raw: dict) -> Night | None:
         body_battery_change=resp.bodyBatteryChange,
         stages=stages,
     )
+
+
+# ---------- Daily summary (steps, stress, Body Battery) ----------
+
+
+class _DailySummary(_Lenient):
+    calendarDate: str
+    totalSteps: int | None = None
+    dailyStepGoal: int | None = None
+    totalDistanceMeters: float | None = None
+    activeKilocalories: float | None = None
+    moderateIntensityMinutes: int | None = None
+    vigorousIntensityMinutes: int | None = None
+    averageStressLevel: int | None = None  # negative = "not enough data"
+    maxStressLevel: int | None = None
+    bodyBatteryHighestValue: int | None = None
+    bodyBatteryLowestValue: int | None = None
+    bodyBatteryChargedValue: int | None = None
+    bodyBatteryDrainedValue: int | None = None
+    restingHeartRate: int | None = None
+
+
+class Day(BaseModel):
+    """One calendar day of activity. Mirrors `Day` in worker/src/schema.ts."""
+
+    date: str
+    steps: int | None
+    step_goal: int | None
+    distance_m: int | None
+    active_kcal: int | None
+    moderate_min: int | None
+    vigorous_min: int | None
+    stress_avg: int | None
+    stress_max: int | None
+    bb_high: int | None
+    bb_low: int | None
+    bb_charged: int | None
+    bb_drained: int | None
+    resting_hr: int | None
+
+
+def _stress(v: int | None) -> int | None:
+    # Garmin reports -1 / -2 when the watch didn't have enough data.
+    return v if v is not None and v >= 0 else None
+
+
+def _round(v: float | None) -> int | None:
+    return None if v is None else round(v)
+
+
+def parse_day(raw: dict) -> Day | None:
+    """Return the day, or None if Garmin has nothing for it (watch not worn or not synced)."""
+    s = _DailySummary.model_validate(raw)
+    day = Day(
+        date=s.calendarDate,
+        steps=s.totalSteps,
+        step_goal=s.dailyStepGoal,
+        distance_m=_round(s.totalDistanceMeters),
+        active_kcal=_round(s.activeKilocalories),
+        moderate_min=s.moderateIntensityMinutes,
+        vigorous_min=s.vigorousIntensityMinutes,
+        stress_avg=_stress(s.averageStressLevel),
+        stress_max=_stress(s.maxStressLevel),
+        bb_high=s.bodyBatteryHighestValue,
+        bb_low=s.bodyBatteryLowestValue,
+        bb_charged=s.bodyBatteryChargedValue,
+        bb_drained=s.bodyBatteryDrainedValue,
+        resting_hr=s.restingHeartRate,
+    )
+    measured = day.model_dump(exclude={"date", "step_goal"}).values()
+    return day if any(v is not None for v in measured) else None
+
+
+# ---------- Activities (workouts) ----------
+
+
+class _ActivityType(_Lenient):
+    typeKey: str | None = None
+
+
+class _Activity(_Lenient):
+    activityId: int
+    activityName: str | None = None
+    activityType: _ActivityType | None = None
+    startTimeLocal: str  # "2026-09-30 18:05:00", your local time
+    startTimeGMT: str  # same moment in UTC
+    duration: float | None = None  # seconds
+    distance: float | None = None  # metres
+    averageHR: float | None = None
+    calories: float | None = None
+    activityTrainingLoad: float | None = None
+
+
+class Activity(BaseModel):
+    """One workout. Mirrors `Activity` in worker/src/schema.ts."""
+
+    id: int
+    date: str  # local calendar date it started on
+    start_ts: int  # epoch seconds, UTC
+    name: str | None
+    type: str | None
+    duration_s: int | None
+    distance_m: int | None
+    avg_hr: int | None
+    calories: int | None
+    training_load: float | None
+
+
+def parse_activity(raw: dict) -> Activity:
+    a = _Activity.model_validate(raw)
+    start = datetime.strptime(a.startTimeGMT[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
+    return Activity(
+        id=a.activityId,
+        date=a.startTimeLocal[:10],
+        start_ts=int(start.timestamp()),
+        name=a.activityName,
+        type=a.activityType.typeKey if a.activityType else None,
+        duration_s=_round(a.duration),
+        distance_m=_round(a.distance),
+        avg_hr=_round(a.averageHR),
+        calories=_round(a.calories),
+        training_load=None if a.activityTrainingLoad is None else round(a.activityTrainingLoad, 1),
+    )
