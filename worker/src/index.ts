@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { ZodError } from "zod";
 import { bearer } from "./auth";
-import { IngestBody, RangeQuery, type Night } from "./schema";
+import { type Activity, DailyIngestBody, type Day, IngestBody, RangeQuery, type Night } from "./schema";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -76,6 +76,58 @@ app.post("/api/ingest", bearer("INGEST_TOKEN"), async (c) => {
   return c.json({ ok: true, nights: nights.length, raw: raw.length });
 });
 
+// Steps, stress, Body Battery and workouts (Day 7). Same upsert-by-key idea as nights.
+app.post("/api/ingest/daily", bearer("INGEST_TOKEN"), async (c) => {
+  const parsed = DailyIngestBody.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "bad request", detail: parsed.error.issues }, 400);
+  const { days, activities, raw } = parsed.data;
+  const ts = now();
+  const db = c.env.DB;
+
+  const upsertDay = db.prepare(
+    `INSERT INTO daily_summaries (date, steps, step_goal, distance_m, active_kcal, moderate_min,
+       vigorous_min, stress_avg, stress_max, bb_high, bb_low, bb_charged, bb_drained, resting_hr, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+     ON CONFLICT(date) DO UPDATE SET
+       steps = excluded.steps, step_goal = excluded.step_goal, distance_m = excluded.distance_m,
+       active_kcal = excluded.active_kcal, moderate_min = excluded.moderate_min,
+       vigorous_min = excluded.vigorous_min, stress_avg = excluded.stress_avg,
+       stress_max = excluded.stress_max, bb_high = excluded.bb_high, bb_low = excluded.bb_low,
+       bb_charged = excluded.bb_charged, bb_drained = excluded.bb_drained,
+       resting_hr = excluded.resting_hr, updated_at = excluded.updated_at`,
+  );
+  const upsertActivity = db.prepare(
+    `INSERT INTO activities (id, date, start_ts, name, type, duration_s, distance_m, avg_hr,
+       calories, training_load, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+     ON CONFLICT(id) DO UPDATE SET
+       date = excluded.date, start_ts = excluded.start_ts, name = excluded.name, type = excluded.type,
+       duration_s = excluded.duration_s, distance_m = excluded.distance_m, avg_hr = excluded.avg_hr,
+       calories = excluded.calories, training_load = excluded.training_load,
+       updated_at = excluded.updated_at`,
+  );
+  const upsertRaw = db.prepare(
+    `INSERT INTO raw_payloads (date, kind, fetched_at, json) VALUES (?1, ?2, ?3, ?4)
+     ON CONFLICT(date, kind) DO UPDATE SET fetched_at = excluded.fetched_at, json = excluded.json`,
+  );
+  const dayValues = (d: Day) => [
+    d.date, d.steps, d.step_goal, d.distance_m, d.active_kcal, d.moderate_min, d.vigorous_min,
+    d.stress_avg, d.stress_max, d.bb_high, d.bb_low, d.bb_charged, d.bb_drained, d.resting_hr, ts,
+  ];
+  const activityValues = (a: Activity) => [
+    a.id, a.date, a.start_ts, a.name, a.type, a.duration_s, a.distance_m, a.avg_hr, a.calories,
+    a.training_load, ts,
+  ];
+
+  const statements = [
+    ...days.map((d) => upsertDay.bind(...dayValues(d))),
+    ...activities.map((a) => upsertActivity.bind(...activityValues(a))),
+    ...raw.map((r) => upsertRaw.bind(r.date, r.kind, ts, JSON.stringify(r.payload))),
+  ];
+  if (statements.length) await db.batch(statements);
+  return c.json({ ok: true, days: days.length, activities: activities.length, raw: raw.length });
+});
+
 // ---------- read (Grafana) ----------
 // Every row carries `time` in epoch ms, which Grafana's Infinity datasource uses as the x axis.
 
@@ -119,6 +171,30 @@ app.get("/api/stages/latest", read, async (c) => {
   // Grafana stretches the last stage to the edge of the chart. A null row at wake-up ends it.
   const last = results.at(-1);
   if (last) results.push({ ...last, time: last.time_end, stage: null });
+  return c.json(results);
+});
+
+// One row per day: steps, stress, Body Battery, plus a 7-day step average.
+app.get("/api/days", read, async (c) => {
+  const { from, to } = range(c.req.query());
+  const { results } = await c.env.DB.prepare(
+    `SELECT date, (unixepoch(date) + 43200) * 1000 AS time, steps, step_goal, distance_m, active_kcal,
+            moderate_min, vigorous_min, stress_avg, stress_max, bb_high, bb_low, bb_charged,
+            bb_drained, resting_hr,
+            ROUND(AVG(steps) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) AS steps_7d
+     FROM daily_summaries WHERE date BETWEEN ?1 AND ?2 ORDER BY date`,
+  ).bind(from, to).all();
+  return c.json(results);
+});
+
+// Workouts, newest first.
+app.get("/api/activities", read, async (c) => {
+  const { from, to } = range(c.req.query());
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, date, start_ts * 1000 AS time, name, type, duration_s, distance_m, avg_hr, calories,
+            training_load
+     FROM activities WHERE date BETWEEN ?1 AND ?2 ORDER BY start_ts DESC`,
+  ).bind(from, to).all();
   return c.json(results);
 });
 

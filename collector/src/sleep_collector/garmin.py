@@ -106,3 +106,40 @@ def fetch_range(api: Garmin, days: int, end: date | None = None) -> dict[str, di
         if i:  # no pause after the last request
             time.sleep(REQUEST_GAP_S)
     return out
+
+
+def fetch_day_stats(api: Garmin, day: date) -> dict | None:
+    """Raw daily summary (steps, stress, Body Battery) for ``day``, or None if Garmin has none.
+
+    Garmin answers "no data" with an error for days the watch wasn't worn, so this one
+    returns None instead of failing the whole run.
+    """
+    try:
+        return api.get_stats(day.isoformat())
+    except Exception as e:  # extras must never block the sleep data
+        log.warning("no daily stats for %s: %s", day, type(e).__name__)
+        return None
+
+
+def fetch_stats_range(api: Garmin, days: int, end: date | None = None) -> dict[str, dict]:
+    """Raw daily summaries for the last ``days`` dates, oldest first. Missing days are left out."""
+    end = end or date.today()
+    out: dict[str, dict] = {}
+    for i in range(days - 1, -1, -1):
+        d = end - timedelta(days=i)
+        raw = fetch_day_stats(api, d)
+        if raw:
+            out[d.isoformat()] = raw
+        time.sleep(REQUEST_GAP_S)
+    return out
+
+
+def fetch_activities(api: Garmin, days: int, end: date | None = None) -> list[dict]:
+    """Raw workouts started in the last ``days`` dates (one request per 20 activities)."""
+    end = end or date.today()
+    start = end - timedelta(days=days - 1)
+    try:
+        return api.get_activities_by_date(start.isoformat(), end.isoformat())
+    except Exception as e:
+        log.warning("could not fetch activities: %s", type(e).__name__)
+        return []

@@ -36,7 +36,7 @@ def test_message_skips_missing_vitals():
 
 @pytest.fixture
 def run_env(fake_garmin, token_path, monkeypatch):
-    monkeypatch.setattr(push, "push", lambda *a: {"ok": True})
+    monkeypatch.setattr(push, "push", lambda *a, **k: {"ok": True})
     monkeypatch.setenv("INGEST_URL", "https://worker.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     monkeypatch.setattr(garmin, "REQUEST_GAP_S", 0)
@@ -51,6 +51,7 @@ def test_run_posts_to_discord_when_configured(run_env, monkeypatch):
     assert cli.main(run_env) == 0
     ((url, content),) = posts
     assert url == "https://discord.test/hook" and "Last night" in content
+    assert "👟" in content and "9,412 steps" in content
 
 
 def test_run_skips_discord_when_not_configured(run_env, monkeypatch):

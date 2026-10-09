@@ -1,0 +1,18 @@
+{
+  "calendarDate": "2026-09-30",
+  "totalSteps": 9412,
+  "dailyStepGoal": 8000,
+  "totalDistanceMeters": 7310.5,
+  "activeKilocalories": 512.0,
+  "moderateIntensityMinutes": 24,
+  "vigorousIntensityMinutes": 18,
+  "averageStressLevel": 31,
+  "maxStressLevel": 88,
+  "bodyBatteryHighestValue": 88,
+  "bodyBatteryLowestValue": 22,
+  "bodyBatteryChargedValue": 61,
+  "bodyBatteryDrainedValue": 58,
+  "restingHeartRate": 52,
+  "privacyProtected": false,
+  "someNewGarminField": "ignored"
+}

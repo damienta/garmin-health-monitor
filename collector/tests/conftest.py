@@ -55,6 +55,12 @@ class FakeGarmin:
     sleep_payload: dict = field(
         default_factory=lambda: json.loads((FIXTURES / "sleep_synthetic.json").read_text())
     )
+    stats_payload: dict = field(
+        default_factory=lambda: json.loads((FIXTURES / "stats_synthetic.json").read_text())
+    )
+    activities_payload: list = field(
+        default_factory=lambda: json.loads((FIXTURES / "activities_synthetic.json").read_text())
+    )
     current_access: str | None = None
     # When True, the old refresh token stops working after it is rotated.
     invalidate_on_rotate: bool = True
@@ -88,6 +94,13 @@ class FakeGarmin:
             return FakeResponse(200, {"userData": {"measurementSystem": "metric"}})
         if path == "/wellness-service/wellness/dailySleepData/tester":
             return FakeResponse(200, self.sleep_payload)
+        if path == "/usersummary-service/usersummary/daily/tester":
+            return FakeResponse(200, self.stats_payload)
+        if path == "/activitylist-service/activities/search/activities":
+            # The library pages 20 at a time until it gets an empty page.
+            params = kwargs.get("params") or {}
+            first_page = str(params.get("start", "0")) == "0" or "start=0" in url
+            return FakeResponse(200, self.activities_payload if first_page else [])
         return FakeResponse(404, {"message": f"no fake for {path}"})
 
 

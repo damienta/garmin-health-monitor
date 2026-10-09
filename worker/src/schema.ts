@@ -43,6 +43,58 @@ export const IngestBody = z.object({
     .default([]),
 });
 
+/** Mirrors `Day` in collector/src/sleep_collector/parse.py. Change both together. */
+const int = z.number().int().nullable();
+export const Day = z.object({
+  date: isoDate,
+  steps: int,
+  step_goal: int,
+  distance_m: int,
+  active_kcal: int,
+  moderate_min: int,
+  vigorous_min: int,
+  stress_avg: int,
+  stress_max: int,
+  bb_high: int,
+  bb_low: int,
+  bb_charged: int,
+  bb_drained: int,
+  resting_hr: int,
+});
+export type Day = z.infer<typeof Day>;
+
+/** Mirrors `Activity` in collector/src/sleep_collector/parse.py. */
+export const Activity = z.object({
+  id: z.number().int(),
+  date: isoDate,
+  start_ts: z.number().int(),
+  name: z.string().max(200).nullable(),
+  type: z.string().max(64).nullable(),
+  duration_s: int,
+  distance_m: int,
+  avg_hr: int,
+  calories: int,
+  training_load: z.number().nullable(),
+});
+export type Activity = z.infer<typeof Activity>;
+
+// Same D1 budget: one write per day, raw JSON and workout, plus nothing else. Keep under 50.
+export const MAX_DAILY_WRITES = 48;
+
+export const DailyIngestBody = z
+  .object({
+    source: z.string().min(1).max(64),
+    days: z.array(Day).max(20).default([]),
+    activities: z.array(Activity).max(40).default([]),
+    raw: z
+      .array(z.object({ date: isoDate, kind: z.string().min(1).max(32), payload: z.unknown() }))
+      .max(20)
+      .default([]),
+  })
+  .refine((b) => b.days.length + b.activities.length + b.raw.length <= MAX_DAILY_WRITES, {
+    message: `at most ${MAX_DAILY_WRITES} rows per request (D1 free plan limit)`,
+  });
+
 export const RangeQuery = z.object({
   from: isoDate.optional(),
   to: isoDate.optional(),

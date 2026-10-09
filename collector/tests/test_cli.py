@@ -37,9 +37,13 @@ def test_fetch_command_writes_raw_json(fake_garmin, token_path, tmp_path, monkey
         cli.main(["--tokenstore", str(token_path), "fetch", "--days", "2", "--out", str(out)]) == 0
     )
     files = sorted(p.name for p in out.iterdir())
-    assert len(files) == 2 and all(f.startswith("sleep-") for f in files)
-    assert json.loads((out / files[0]).read_text())["dailySleepDTO"]
-    assert "score=81" in capsys.readouterr().out
+    kinds = [f.split("-")[0] for f in files]
+    assert kinds == ["activities.json", "sleep", "sleep", "stats", "stats"]
+    assert json.loads((out / files[1]).read_text())["dailySleepDTO"]
+    printed = capsys.readouterr().out
+    assert "score=81" in printed
+    assert "steps=9412" in printed and "body_battery=22-88" in printed
+    assert "running  Evening Run  45 min  load=112.6" in printed
 
 
 def test_dead_tokens_exit_2_with_instructions(fake_garmin, token_path, capsys):

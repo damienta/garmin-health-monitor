@@ -9,8 +9,8 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | 3 | Grafana dashboards and alert | **Done** |
 | 4 | Frontend skeleton behind Cloudflare Access (one trends chart), daily Discord ping, Grafana alerts to Discord | **Done** |
 | 5 | Frontend proper: minimal design, last night card and stages, more trend charts | **Done** |
-| 6 | Grafana code monitoring | Not started |
-| 7 | More Garmin data (steps, stress, Body Battery, training) | Not started |
+| 6 | Grafana code monitoring | Later (after Days 7 and 8) |
+| 7 | More Garmin data (steps, stress, Body Battery, workouts) | In progress |
 | 8 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | Not started |
 
 ## Day 1: Garmin connection
