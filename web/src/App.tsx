@@ -1,12 +1,16 @@
 import { useState, type ReactNode } from "react";
-import { getHealth, getNights, getTrends } from "./api";
+import { getActivities, getDays, getHealth, getNights, getTrends } from "./api";
+import { BodyBatteryChart } from "./charts/BodyBatteryChart";
 import { DurationChart } from "./charts/DurationChart";
+import { IntensityChart } from "./charts/IntensityChart";
 import { ScoreChart } from "./charts/ScoreChart";
 import { StageMixChart } from "./charts/StageMixChart";
+import { StepsChart } from "./charts/StepsChart";
 import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
 import { LastNight } from "./components/LastNight";
 import { RangePicker, type Range } from "./components/RangePicker";
+import { Workouts } from "./components/Workouts";
 import { useLoad, type Loaded } from "./useApi";
 
 export function App() {
@@ -14,6 +18,8 @@ export function App() {
   const health = useLoad(getHealth, "health");
   const trends = useLoad(() => getTrends(range), `trends-${range}`);
   const nights = useLoad(() => getNights(range), `nights-${range}`);
+  const days = useLoad(() => getDays(range), `days-${range}`);
+  const activities = useLoad(() => getActivities(range), `activities-${range}`);
 
   return (
     <main>
@@ -46,6 +52,31 @@ export function App() {
           </Body>
         </Card>
       </div>
+
+      <div className="grid-2">
+        <Card title="Steps" delay={380}>
+          <Body state={days} height={220} empty="No activity data in this range yet.">{(rows) => <StepsChart rows={rows} />}</Body>
+        </Card>
+        <Card title="Body Battery" delay={420} aside={<span className="sub">Daily low to high</span>}>
+          <Body state={days} height={220} empty="No activity data in this range yet.">{(rows) => <BodyBatteryChart rows={rows} />}</Body>
+        </Card>
+        <Card title="Stress" delay={460} aside={<span className="sub">Lower is usually better</span>}>
+          <Body state={days} height={200} empty="No activity data in this range yet.">
+            {(rows) => <VitalChart rows={rows} value={(r) => r.stress_avg} unit="" label="Day" avgLabel="7-day average" />}
+          </Body>
+        </Card>
+        <Card title="Intensity minutes" delay={500}>
+          <Body state={days} height={200} empty="No activity data in this range yet.">
+            {(rows) => <IntensityChart rows={rows} />}
+          </Body>
+        </Card>
+      </div>
+
+      <Card title="Workouts" delay={540} aside={<span className="sub">Latest 12 in range</span>}>
+        <Body state={activities} height={200} empty="No workouts in this range.">
+          {(rows) => <Workouts rows={rows} />}
+        </Body>
+      </Card>
     </main>
   );
 }
@@ -54,14 +85,16 @@ export function App() {
 function Body<T>({
   state,
   height,
+  empty = "No nights in this range yet.",
   children,
 }: {
   state: Loaded<T[]>;
   height: number;
+  empty?: string;
   children: (rows: T[]) => ReactNode;
 }) {
   if (state.kind === "loading") return <div className="skeleton" style={{ height }} />;
   if (state.kind === "error") return <p className="error">Couldn't load data: {state.message}</p>;
-  if (state.data.length === 0) return <p className="muted">No nights in this range yet.</p>;
+  if (state.data.length === 0) return <p className="muted">{empty}</p>;
   return <>{children(state.data)}</>;
 }

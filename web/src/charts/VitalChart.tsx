@@ -1,5 +1,4 @@
 import { ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip } from "recharts";
-import type { TrendRow } from "../api";
 import { Tip } from "../components/Tooltip";
 import { longDate } from "../format";
 import { rolling7 } from "../sleep";
@@ -7,17 +6,21 @@ import { cursorLine, grid, xAxis, yAxis } from "./axes";
 import { niceRange } from "./scale";
 
 /**
- * One vital (HRV or resting HR): nightly dots plus a 7-night average. HRV and resting HR
- * get a chart each rather than sharing one with two y-axes.
+ * One measure per day or night (HRV, resting HR, stress): dots plus a 7-day average.
+ * Each measure gets its own chart rather than sharing one with two y-axes.
  */
-export function VitalChart({
+export function VitalChart<T extends { date: string }>({
   rows,
   value,
   unit,
+  label = "Night",
+  avgLabel = "7-night average",
 }: {
-  rows: TrendRow[];
-  value: (r: TrendRow) => number | null;
+  rows: T[];
+  value: (r: T) => number | null;
   unit: string;
+  label?: string;
+  avgLabel?: string;
 }) {
   const avg = rolling7(rows, value);
   const data = rows.map((r, i) => ({ date: r.date, v: value(r), avg: avg[i] == null ? null : Math.round(avg[i]! * 10) / 10 }));
@@ -36,8 +39,8 @@ export function VitalChart({
               <Tip
                 title={longDate(r.date)}
                 rows={[
-                  { label: "Night", value: r.v != null ? `${Math.round(r.v)} ${unit}` : "–", color: "var(--muted)", shape: "dot" },
-                  { label: "7-night average", value: r.avg != null ? `${r.avg} ${unit}` : "–", color: "var(--ink)", shape: "line" },
+                  { label, value: r.v != null ? `${Math.round(r.v)} ${unit}` : "–", color: "var(--muted)", shape: "dot" },
+                  { label: avgLabel, value: r.avg != null ? `${r.avg} ${unit}` : "–", color: "var(--ink)", shape: "line" },
                 ]}
               />
             );

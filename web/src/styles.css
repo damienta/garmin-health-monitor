@@ -421,3 +421,48 @@ main {
   flex-wrap: wrap;
   margin-top: 24px;
 }
+
+/* ---------- tables ---------- */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--grid);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.small {
+  font-size: 0.8125rem;
+}

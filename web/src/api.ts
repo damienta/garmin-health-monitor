@@ -69,3 +69,41 @@ export interface NightRow {
 }
 
 export const getNights = (days: number) => get<NightRow[]>(`/api/nights?days=${days}`);
+
+/** One day from GET /api/days (steps, stress, Body Battery). */
+export interface DayRow {
+  date: string;
+  time: number;
+  steps: number | null;
+  step_goal: number | null;
+  steps_7d: number | null;
+  distance_m: number | null;
+  active_kcal: number | null;
+  moderate_min: number | null;
+  vigorous_min: number | null;
+  stress_avg: number | null;
+  stress_max: number | null;
+  bb_high: number | null;
+  bb_low: number | null;
+  bb_charged: number | null;
+  bb_drained: number | null;
+  resting_hr: number | null;
+}
+
+export const getDays = (days: number) => get<DayRow[]>(`/api/days?days=${days}`);
+
+/** One workout from GET /api/activities (newest first). */
+export interface ActivityRow {
+  id: number;
+  date: string;
+  time: number;
+  name: string | null;
+  type: string | null;
+  duration_s: number | null;
+  distance_m: number | null;
+  avg_hr: number | null;
+  calories: number | null;
+  training_load: number | null;
+}
+
+export const getActivities = (days: number) => get<ActivityRow[]>(`/api/activities?days=${days}`);
