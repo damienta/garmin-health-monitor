@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { getActivities, getDays, getHealth, getNights, getTrends } from "./api";
+import { BedtimeChart } from "./charts/BedtimeChart";
+import { bedtimeSpread } from "./charts/bedtime";
 import { BodyBatteryChart } from "./charts/BodyBatteryChart";
 import { DurationChart } from "./charts/DurationChart";
 import { IntensityChart } from "./charts/IntensityChart";
@@ -10,7 +12,8 @@ import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
 import { LastNight } from "./components/LastNight";
 import { Nav } from "./components/Nav";
-import { RangePicker, type Range } from "./components/RangePicker";
+import { RangePicker, rangeText, type Range } from "./components/RangePicker";
+import { RecordsCard } from "./components/RecordsCard";
 import { Workouts } from "./components/Workouts";
 import { useLoad, type Loaded } from "./useApi";
 import { useRoute } from "./useRoute";
@@ -35,6 +38,9 @@ function LastNightPage() {
 
 function AllTime() {
   const [range, setRange] = useState<Range>(30);
+  // Records always look at everything, whatever the range picker says.
+  const allNights = useLoad(() => getNights(3650), "nights-all");
+  const allDays = useLoad(() => getDays(3650).catch(() => []), "days-all");
   const trends = useLoad(() => getTrends(range), `trends-${range}`);
   const nights = useLoad(() => getNights(range), `nights-${range}`);
   const days = useLoad(() => getDays(range), `days-${range}`);
@@ -42,11 +48,33 @@ function AllTime() {
 
   return (
     <>
+      <Card title="Records" delay={60} aside={<span className="sub">All nights</span>}>
+        {allNights.kind === "loading" && <div className="skeleton" style={{ height: 140 }} />}
+        {allNights.kind === "error" && <p className="error">Couldn't load data: {allNights.message}</p>}
+        {allNights.kind === "ready" && (
+          <RecordsCard nights={allNights.data} days={allDays.kind === "ready" ? allDays.data : []} />
+        )}
+      </Card>
+
       <div className="section-head">
         <RangePicker value={range} onChange={setRange} />
       </div>
 
-      <Card title="Sleep score" delay={180} aside={<span className="sub">Last {range} nights</span>}>
+      <Card
+        title="Sleep window"
+        delay={140}
+        aside={
+          <span className="sub">
+            {nights.kind === "ready" && bedtimeSpread(nights.data) != null
+              ? `Bedtime varies ±${bedtimeSpread(nights.data)} min`
+              : rangeText(range)}
+          </span>
+        }
+      >
+        <Body state={nights} height={260}>{(rows) => <BedtimeChart rows={rows} />}</Body>
+      </Card>
+
+      <Card title="Sleep score" delay={180} aside={<span className="sub">{rangeText(range)}</span>}>
         <Body state={trends} height={260}>{(rows) => <ScoreChart rows={rows} />}</Body>
       </Card>
 
