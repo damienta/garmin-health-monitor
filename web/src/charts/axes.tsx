@@ -18,7 +18,9 @@ export const xAxis = () => (
   />
 );
 
-export const yAxis = (props: { domain?: [number, number]; ticks?: number[]; unit?: string } = {}) => (
+export const yAxis = (
+  props: { domain?: [number, number]; ticks?: number[]; unit?: string; tickFormatter?: (v: number) => string } = {},
+) => (
   <YAxis
     {...props}
     stroke="var(--axis)"
