@@ -16,6 +16,9 @@ export function sleepWindows(rows: NightRow[]) {
     });
 }
 
+/** The sleep window chart draws one row per night, so it stops at this many. */
+export const MAX_ROWS = 60;
+
 export const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const sd = (xs: number[]) => Math.sqrt(mean(xs.map((x) => (x - mean(xs)) ** 2)));
 
