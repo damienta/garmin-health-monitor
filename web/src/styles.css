@@ -595,3 +595,57 @@ main {
   padding-top: 16px;
   border-top: 1px solid var(--grid);
 }
+
+/* ---------- insights ---------- */
+
+.helps {
+  display: grid;
+  gap: 20px;
+}
+
+.helps-text {
+  margin: 2px 0 8px;
+  color: var(--ink-2);
+}
+
+.helps-text strong {
+  color: var(--ink);
+}
+
+.helps-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) 2.5rem;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.helps-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--wash);
+  overflow: hidden;
+}
+
+.helps-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.helps-value {
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .helps-bar {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+  .helps-label {
+    grid-column: 1 / -1;
+  }
+}
