@@ -23,7 +23,7 @@ export function App() {
   return (
     <main>
       <Nav page={page} />
-      {page === "night" ? <LastNightPage /> : <AllTime />}
+      {page === "yesterday" ? <LastNightPage /> : <AllTime />}
     </main>
   );
 }
@@ -71,7 +71,7 @@ function AllTime() {
           </span>
         }
       >
-        <Body state={nights} height={260}>{(rows) => <BedtimeChart rows={rows} />}</Body>
+        <Body state={nights} height={300}>{(rows) => <BedtimeChart rows={rows} />}</Body>
       </Card>
 
       <Card title="Sleep score" delay={180} aside={<span className="sub">{rangeText(range)}</span>}>
