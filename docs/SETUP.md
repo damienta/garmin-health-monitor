@@ -91,6 +91,19 @@ curl.exe -H "Authorization: Bearer <READ_TOKEN>" "https://garmin-health-monitor.
 
 You should see your nights. From now on it runs by itself every day at 09:23 UTC.
 
+## 6. On-time daily run (Cloudflare cron)
+
+GitHub's own schedule runs hours late. The API Worker has a Cron Trigger that starts the collect workflow at 09:23 UTC instead. It needs one GitHub token:
+
+1. GitHub → your profile picture → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+2. Name `garmin-cron`, expiry 1 year, **Only select repositories** → `garmin-health-monitor`.
+3. **Repository permissions → Actions → Read and write.** Nothing else.
+4. Generate, copy it, and store it on the Worker (don't paste it anywhere else):
+   `npx wrangler secret put GITHUB_DISPATCH_TOKEN` (from `worker/`), or Cloudflare dashboard → Workers → `garmin-health-monitor` → Settings → Variables and Secrets → Add → type **Secret**.
+5. Test it: Cloudflare dashboard → the Worker → Settings → Trigger Events shows the cron. The next morning, GitHub Actions shows a `collect` run started by "workflow_dispatch" at 09:23.
+
+Until the token is set, the Worker does nothing and GitHub's backup schedule still runs (late). When the token expires, the cron run shows as failed in Cloudflare and the backup takes over.
+
 ## When something breaks
 
 | Symptom | Fix |

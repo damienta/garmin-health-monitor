@@ -2,6 +2,8 @@ interface Env {
   DB: D1Database;
   INGEST_TOKEN: string;
   READ_TOKEN: string;
+  GITHUB_REPO?: string;
+  GITHUB_DISPATCH_TOKEN?: string;
 }
 
 declare namespace Cloudflare {
@@ -9,5 +11,7 @@ declare namespace Cloudflare {
     DB: D1Database;
     INGEST_TOKEN: string;
     READ_TOKEN: string;
+    GITHUB_REPO?: string;
+    GITHUB_DISPATCH_TOKEN?: string;
   }
 }

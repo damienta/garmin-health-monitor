@@ -1,11 +1,13 @@
 name: collect
 
 on:
+  # The daily run is started on time at 09:23 UTC by a Cloudflare Cron Trigger on the
+  # API Worker (worker/src/dispatch.ts), which calls workflow_dispatch below.
+  # GitHub's own schedule is only a backup: it runs hours late when GitHub is busy,
+  # and the "check" job skips it when today's run already succeeded.
+  # Each run re-fetches 3 days, so a late watch sync is picked up the next morning.
   schedule:
-    # Once a day at 09:23 UTC (10:23 in summer, 09:23 in winter, UK).
-    # Odd minute: GitHub delays :00 schedules when busy. Each run re-fetches 3 days,
-    # so a late watch sync or a skipped run is picked up the next morning.
-    - cron: "23 9 * * *"
+    - cron: "23 13 * * *"
   workflow_dispatch:
     inputs:
       days:
@@ -23,13 +25,34 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read # lets the check job list this workflow's runs
 
 env:
   # Relative to the workspace (hashFiles and the cache action need that). Never committed.
   TOKEN_FILE: .garmin/garmin_tokens.json
 
 jobs:
+  # Backup schedule only: skip if a run already succeeded today (UTC).
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      skip: ${{ steps.today.outputs.skip }}
+    steps:
+      - id: today
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != schedule ]; then echo skip=false >> "$GITHUB_OUTPUT"; exit 0; fi
+          done=$(gh run list -R "$GITHUB_REPOSITORY" --workflow collect.yml --status success \
+            --created ">=$(date -u +%F)" --json databaseId --jq length)
+          echo "Successful runs today: $done"
+          if [ "$done" -gt 0 ]; then echo skip=true >> "$GITHUB_OUTPUT"; else echo skip=false >> "$GITHUB_OUTPUT"; fi
+
   collect:
+    needs: check
+    if: ${{ needs.check.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -75,6 +98,7 @@ jobs:
           DAYS: ${{ inputs.days || '3' }}
         run: |
           # Sundays: look back two weeks to catch anything older that was missed.
+          # (The Cloudflare trigger does the same by sending days=14 on Sundays.)
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = 7 ]; then DAYS=14; fi
           uv run sleep-collector --tokenstore "$GITHUB_WORKSPACE/$TOKEN_FILE" run --days "$DAYS"
 
