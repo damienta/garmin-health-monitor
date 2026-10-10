@@ -18,6 +18,7 @@
   --wash: rgba(11, 11, 11, 0.04);
   --good: #006300;
   --bad: #d03b3b;
+  --warn: #a86b00; /* recovery check only: green / amber / red, always with words */
 
   --deep: #2a78d6;
   --light: #1baf7a;
@@ -45,6 +46,7 @@
     --wash: rgba(255, 255, 255, 0.05);
     --good: #0ca30c;
     --bad: #e66767;
+    --warn: #e0a82e;
 
     --deep: #3987e5;
     --light: #199e70;
@@ -521,4 +523,75 @@ main {
   letter-spacing: -0.03em;
   margin: 2px 0;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- yesterday ---------- */
+
+.headline {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tips {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.tips li + li {
+  margin-top: 6px;
+}
+
+.status {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.status-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--axis);
+}
+
+.status-dot.green {
+  background: var(--good);
+}
+
+.status-dot.yellow {
+  background: var(--warn);
+}
+
+.status-dot.red {
+  background: var(--bad);
+}
+
+.status-title {
+  font-weight: 600;
+}
+
+.meter {
+  height: 6px;
+  margin: 6px 0 2px;
+  border-radius: 3px;
+  background: var(--wash);
+  overflow: hidden;
+}
+
+.meter > div {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ink);
+}
+
+.day-workouts {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--grid);
 }

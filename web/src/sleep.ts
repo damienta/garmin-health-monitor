@@ -28,6 +28,8 @@ export interface Baseline {
   duration_h: number | null;
   hrv: number | null;
   resting_hr: number | null;
+  /** Usual bedtime, minutes from midnight (23:30 is -30). */
+  bedtime?: number | null;
 }
 
 const mean = (xs: (number | null)[]) => {
@@ -44,6 +46,7 @@ export function baseline(rows: TrendRow[], date: string): Baseline {
     duration_h: mean(prior.map((r) => r.duration_h)),
     hrv: mean(prior.map((r) => r.hrv_avg)),
     resting_hr: mean(prior.map((r) => r.resting_hr)),
+    bedtime: mean(prior.map((r) => r.bedtime_min)),
   };
 }
 

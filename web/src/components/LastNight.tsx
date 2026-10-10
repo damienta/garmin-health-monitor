@@ -1,65 +1,103 @@
 import type { ReactNode } from "react";
-import { type DayRow, getDays, getNight, getTrends, type Night, type TrendRow } from "../api";
+import { type ActivityRow, type DayRow, getActivities, getDays, getNight, getTrends, type Night, type TrendRow } from "../api";
 import { Hypnogram } from "../charts/Hypnogram";
 import { StageBar } from "../charts/StageBar";
 import { longDate } from "../format";
 import { baseline, clock, hm } from "../sleep";
-import { writeSummary } from "../summary";
+import { pickDay, previousDate } from "../day";
+import { checkRecovery } from "../recovery";
+import { headline, writeSummary } from "../summary";
+import { writeTips } from "../tips";
+import { DayCard } from "./DayCard";
+import { RecoveryCheck } from "./RecoveryCheck";
 import { useLoad } from "../useApi";
 import { Card } from "./Card";
 import { CountUp } from "./CountUp";
 import { Delta } from "./Delta";
 
-/** Last night in full: score, times, vitals against your usual, stage split and timeline. */
+/**
+ * The Yesterday page: last night's sleep, a recovery check, a written summary with tips,
+ * the day that led into the night, and the stage timeline.
+ */
 export function LastNight({ date }: { date: string }) {
   const data = useLoad(
-    // Days can fail (older data has none) without hiding the night.
-    () => Promise.all([getNight(date), getTrends(14), getDays(14).catch(() => [] as DayRow[])]),
+    // Days and workouts can fail (older data has none) without hiding the night.
+    () =>
+      Promise.all([
+        getNight(date),
+        getTrends(45),
+        getDays(14).catch(() => [] as DayRow[]),
+        getActivities(14).catch(() => [] as ActivityRow[]),
+      ]),
     `night-${date}`,
   );
+  const nightTitle = `Night of ${longDate(previousDate(date))}`;
 
   if (data.kind === "loading") {
     return (
-      <Card title="Last night">
+      <Card title={nightTitle}>
         <div className="skeleton" style={{ height: 180 }} />
       </Card>
     );
   }
   if (data.kind === "error") {
     return (
-      <Card title="Last night">
+      <Card title={nightTitle}>
         <p className="error">Couldn't load last night: {data.message}</p>
       </Card>
     );
   }
-  const [night, rows, days] = data.data;
-  const dayBefore = days.find((d) => d.date === previousDate(night.date)) ?? null;
-  const sentences = writeSummary(night, baseline(rows, night.date), dayBefore);
+  const [night, rows, days, activities] = data.data;
+  const usual = baseline(rows, night.date);
+  const recovery = checkRecovery(rows, night.date);
+  const picked = pickDay(days, previousDate(night.date));
+  const day = picked?.exact ? picked.day : null;
+  const workouts = picked ? activities.filter((a) => a.date === picked.day.date) : [];
+  const sentences = writeSummary(night, usual, day, workouts);
+  const tips = writeTips(night, usual, day, recovery);
   return (
     <>
-      <Summary night={night} rows={rows} />
-      <Card title="In short" delay={90}>
-        <p className="prose">{sentences.join(" ")}</p>
-      </Card>
-      <Card title="Sleep stages" aside={<span className="sub">{longDate(night.date)}</span>} delay={150}>
+      <Summary night={night} rows={rows} title={nightTitle} />
+      <RecoveryCheck r={recovery} delay={90} />
+      <div className="grid-2">
+        <Card title="In short" delay={120}>
+          <p className="headline">{headline(night, usual, recovery)}</p>
+          <p className="prose">{sentences.join(" ")}</p>
+        </Card>
+        <Card title="Try this" delay={150} aside={<span className="sub">General tips, not medical advice</span>}>
+          <ul className="tips">
+            {tips.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+      {picked ? (
+        <DayCard
+          day={picked.day}
+          exact={picked.exact}
+          wanted={previousDate(night.date)}
+          days={days}
+          workouts={workouts}
+          delay={180}
+        />
+      ) : (
+        <Card title="Yesterday" delay={180}>
+          <p className="muted">No daily numbers yet. Steps, stress and Body Battery appear after the next daily run.</p>
+        </Card>
+      )}
+      <Card title="Sleep stages" aside={<span className="sub">{longDate(night.date)}</span>} delay={210}>
         <Hypnogram night={night} />
       </Card>
     </>
   );
 }
 
-/** "2026-10-07" -> "2026-10-06". */
-const previousDate = (iso: string) => {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
-};
-
-function Summary({ night, rows }: { night: Night; rows: TrendRow[] }) {
+function Summary({ night, rows, title }: { night: Night; rows: TrendRow[]; title: string }) {
   const usual = baseline(rows, night.date);
   const diff = (a: number | null, b: number | null) => (a == null || b == null ? null : a - b);
   return (
-    <Card title="Last night" aside={<span className="sub">{longDate(night.date)}</span>} delay={60}>
+    <Card title={title} aside={<span className="sub">woke {longDate(night.date)}</span>} delay={60}>
       <div className="lastnight">
         <div className="hero">
           <div className="hero-number">{night.score != null ? <CountUp value={night.score} /> : "–"}</div>
