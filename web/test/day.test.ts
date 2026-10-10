@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DayRow } from "../src/api";
-import { dayBaseline, intensity, pickDay, previousDate } from "../src/day";
+import { dayBaseline, nextDate, pickDay, previousDate } from "../src/day";
 
 const d = (date: string, o: Partial<DayRow> = {}) => ({ date, steps: 8000, stress_avg: 30, bb_high: 80, ...o }) as DayRow;
 
@@ -21,7 +21,7 @@ describe("pickDay", () => {
 
 describe("day helpers", () => {
   it("steps back a day across months", () => expect(previousDate("2026-10-01")).toBe("2026-09-30"));
-  it("counts vigorous minutes double", () => expect(intensity(d("x", { moderate_min: 20, vigorous_min: 10 }))).toBe(40));
+  it("steps forward a day across months", () => expect(nextDate("2026-09-30")).toBe("2026-10-01"));
   it("averages the days before", () => {
     const b = dayBaseline([d("2026-10-07", { steps: 6000 }), d("2026-10-08", { steps: 10000 }), d("2026-10-09", { steps: 1 })], "2026-10-09");
     expect(b.steps).toBe(8000);
