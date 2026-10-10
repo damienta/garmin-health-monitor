@@ -16,7 +16,7 @@ Reference implementation (all slices, already tested): https://github.com/damien
 Minimal and calm, after the references the owner picked (godly.design, manus.im, react-spring.dev, ui.watermelon.sh):
 
 - Warm neutral page and cards, hairline borders, 16px radius, lots of space, system sans, no decoration.
-- Colour only means something: sleep stages (deep blue, light aqua, REM violet, awake orange, checked for colour-blind separation in light and dark). Everything else is ink and grey.
+- Colour only means something: sleep stages (deep blue, light aqua, REM violet, awake orange, checked for colour-blind separation in light and dark). The only other colours are `--good`/`--warn`/`--bad` for "vs usual" arrows and the Recovery check light, always paired with words. Everything else is ink and grey.
 - Charts: 2px lines, dots with a 2px surface ring, hairline grid, one y-axis (two measures = two charts), a legend for 2+ series, a hover tooltip on every chart.
 - Motion: subtle springs (`@react-spring/web`) for cards and numbers only; off when the OS asks for reduced motion.
 - Tokens live in `web/src/styles.css`. Use them; never hard-code colours in components.
