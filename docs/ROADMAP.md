@@ -12,6 +12,12 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | 6 | Grafana code monitoring | Later (after Days 7 and 8) |
 | 7 | More Garmin data (steps, stress, Body Battery, workouts) | **Done** |
 | 8 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | **Done** |
+| 9 | On-time daily run (Cloudflare cron), clean URLs, recovery check, insights on Trends | **Done** |
+| 10 | Daily page: one date for a day and the sleep after it, This week card | **Done** |
+| 11 | Trends cleanup: remove workouts and training load, same start date on every chart, weekly bars past 90 days | Next |
+| 12 | Find why workouts arrive as 0 (log a warning instead of failing quietly) | Planned |
+| 13 | Remove the GitHub backup schedule once the Cloudflare timer has run on its own for a week | Planned |
+| 14 | README with real screenshots and a GIF, visual first | Planned |
 
 ## Day 1: Garmin connection
 
@@ -80,6 +86,30 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 - Last night page with a written summary generated from the numbers (no AI)
 - All time page: best and worst score with dates, averages, streaks, bedtime consistency chart
+
+## Day 9: On time, clean URLs, insights
+
+- Cloudflare Cron Trigger on the API Worker starts `collect.yml` at 09:23 UTC (GitHub's own schedule ran hours late)
+- Pages at `/` and `/trends`; sleep window reads left to right
+- Recovery check (HRV and resting HR vs your 30-night normal), what helps your sleep, sleep debt
+
+## Day 10: Daily page
+
+- One date per page: that day's stats and the sleep that followed it (complete by 09:23)
+- ‹ › day picker, `?day=` links; recovery light inside In short; This week vs last week
+- Sleep card adds overnight recharge, breathing, sleep stress and times woken
+- Removed: Try this, intensity minutes
+
+## Day 11: Trends cleanup
+
+- Remove the Workouts card, Training load vs HRV and the Exercise row (no workouts are arriving)
+- Every chart in a range starts on the same date; missing days are gaps
+- Past 90 days, charts switch to weekly averages so a year stays readable
+
+## Day 12: Missing workouts
+
+- The collector warns in the run log when the workout fetch fails, instead of reporting 0
+- Check with a local `fetch` whether it's Garmin or the code
 
 ## Agent prompt for each day
 
