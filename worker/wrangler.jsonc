@@ -12,8 +12,13 @@
       "database_id": "bba1524a-7d0e-44d4-ba02-751176e38ce4",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  // Cron Trigger: 09:23 UTC every day, on time (GitHub's own cron runs hours late).
+  // The scheduled() handler in src/index.ts asks GitHub to start collect.yml.
+  "triggers": { "crons": ["23 9 * * *"] },
+  "vars": { "GITHUB_REPO": "damienta/garmin-health-monitor" }
   // Secrets (set with `npx wrangler secret put <NAME>`, or .dev.vars locally):
   //   INGEST_TOKEN  collector -> POST /api/ingest
   //   READ_TOKEN    Grafana (Day 3) and you -> GET /api/*
+  //   GITHUB_DISPATCH_TOKEN  fine-grained GitHub token, Actions: read and write on this repo only
 }

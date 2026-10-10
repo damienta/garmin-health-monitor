@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { ZodError } from "zod";
 import { bearer } from "./auth";
+import { dispatchCollect } from "./dispatch";
 import { type Activity, DailyIngestBody, type Day, IngestBody, RangeQuery, type Night } from "./schema";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -258,4 +259,13 @@ app.get("/api/health", read, async (c) => {
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Cloudflare Cron Trigger (see "triggers" in wrangler.jsonc): start the daily collect on time.
+  async scheduled(controller, env) {
+    const result = await dispatchCollect(env, fetch, new Date(controller.scheduledTime));
+    if (result.ok) console.log("collect workflow dispatched");
+    // Throwing marks the cron run as failed in the Cloudflare dashboard.
+    else throw new Error(`collect dispatch failed: ${result.reason}`);
+  },
+} satisfies ExportedHandler<Env>;
