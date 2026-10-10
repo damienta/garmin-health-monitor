@@ -31,7 +31,7 @@ export function useRoute(): Page {
 
 /** Go to a page without reloading. */
 export function go(page: Page) {
-  if (window.location.pathname === PATHS[page]) return;
+  if (window.location.pathname === PATHS[page] && !window.location.search) return;
   window.history.pushState(null, "", PATHS[page]);
   window.dispatchEvent(new Event("navigate-page"));
 }

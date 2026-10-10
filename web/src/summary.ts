@@ -1,12 +1,10 @@
 import type { ActivityRow, DayRow, Night } from "./api";
-import type { Recovery } from "./recovery";
-import { clock, hm, type Baseline, stageSplit } from "./sleep";
-import { bedtimeMin } from "./tips";
+import { bedtimeMin, clock, hm, type Baseline, stageSplit } from "./sleep";
 
 /**
  * The one-line verdict above "In short": how good the night was, and whether it was short.
  */
-export function headline(night: Night, usual: Baseline, recovery?: Recovery | null): string {
+export function headline(night: Night, usual: Baseline): string {
   const hours = night.duration_s / 3600;
   const s = night.score;
   let line =
@@ -23,10 +21,7 @@ export function headline(night: Night, usual: Baseline, recovery?: Recovery | nu
             : "A poor night";
   const short = hours < 6.5 || (usual.duration_h != null && hours < usual.duration_h - 0.5);
   if (s != null && short) line += s >= 75 ? ", if a bit short" : ", and a short one";
-  line += ".";
-  if (recovery?.level === "red") line += " Your body looks under strain today.";
-  else if (recovery?.level === "yellow") line += " One recovery signal is off.";
-  return line;
+  return `${line}.`;
 }
 
 const n = (v: number) => Math.round(v).toLocaleString("en-GB");
@@ -97,7 +92,7 @@ export function writeSummary(
     out.push(`${text[0].toUpperCase()}${text.slice(1)} on your usual.`);
   }
 
-  // The day before: what led into the night.
+  // The day that led into the night.
   if (day) {
     const bits: string[] = [];
     if (day.steps != null) bits.push(`${n(day.steps)} steps`);
@@ -106,7 +101,7 @@ export function writeSummary(
     }
     if (day.stress_avg != null) bits.push(`average stress ${day.stress_avg}`);
     if (day.bb_high != null) bits.push(`Body Battery peaking at ${day.bb_high}`);
-    if (bits.length) out.push(`The day before: ${bits.join(", ")}.`);
+    if (bits.length) out.push(`During the day: ${bits.join(", ")}.`);
   }
   return out;
 }

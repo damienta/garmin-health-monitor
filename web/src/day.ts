@@ -1,5 +1,12 @@
 import type { DayRow } from "./api";
 
+/** "2026-10-07" -> "2026-10-08". */
+export const nextDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
+
 /** "2026-10-07" -> "2026-10-06". */
 export const previousDate = (iso: string) => {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -31,12 +38,8 @@ export function dayBaseline(days: DayRow[], date: string) {
   return {
     steps: mean(prior.map((d) => d.steps)),
     active_kcal: mean(prior.map((d) => d.active_kcal)),
-    intensity: mean(prior.map((d) => (d.moderate_min == null && d.vigorous_min == null ? null : intensity(d)))),
     stress: mean(prior.map((d) => d.stress_avg)),
     bb_high: mean(prior.map((d) => d.bb_high)),
     resting_hr: mean(prior.map((d) => d.resting_hr)),
   };
 }
-
-/** Intensity minutes the way Garmin counts them: vigorous minutes count double. */
-export const intensity = (d: DayRow) => (d.moderate_min ?? 0) + 2 * (d.vigorous_min ?? 0);

@@ -55,7 +55,7 @@ describe("writeSummary", () => {
   it("adds the day before when there is one", () => {
     const day = { steps: 9412, stress_avg: 31, bb_high: 88 } as DayRow;
     expect(writeSummary(night(), usual, day).at(-1)).toBe(
-      "The day before: 9,412 steps, average stress 31, Body Battery peaking at 88.",
+      "During the day: 9,412 steps, average stress 31, Body Battery peaking at 88.",
     );
   });
 });

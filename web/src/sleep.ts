@@ -22,6 +22,10 @@ export function clock(ts: number, tzOffsetMin: number): string {
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
+/** Bedtime as minutes from local midnight (23:30 is -30), same as the API's bedtime_min. */
+export const bedtimeMin = (n: { start_ts: number; tz_offset_min: number }) =>
+  ((Math.floor(((n.start_ts + n.tz_offset_min * 60) % 86400) / 60) + 720) % 1440 + 1440) % 1440 - 720;
+
 export interface Baseline {
   nights: number;
   score: number | null;

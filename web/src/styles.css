@@ -517,6 +517,16 @@ main {
   }
 }
 
+.tiles.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .tiles.three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .tile-value {
   font-size: 1.75rem;
   font-weight: 600;
@@ -546,6 +556,7 @@ main {
 }
 
 .status {
+  margin-bottom: 16px;
   display: flex;
   gap: 12px;
   align-items: flex-start;
@@ -648,4 +659,38 @@ main {
   .helps-label {
     grid-column: 1 / -1;
   }
+}
+
+/* ---------- day picker ---------- */
+
+.daypick {
+  align-items: center;
+}
+
+.daypick button {
+  min-width: 36px;
+  font-size: 1rem;
+}
+
+.daypick button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.daypick-date {
+  padding: 0 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 8.5em;
+  text-align: center;
+}
+
+.linkish {
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
 }

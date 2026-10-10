@@ -2,7 +2,7 @@ import type { MouseEvent } from "react";
 import { PATHS, type Page } from "../routes";
 import { go } from "../useRoute";
 
-const LABELS: Record<Page, string> = { yesterday: "Yesterday", trends: "Trends" };
+const LABELS: Record<Page, string> = { daily: "Daily", trends: "Trends" };
 
 /** The page switch: same pill style as the range picker, made of real links. */
 export function Nav({ page }: { page: Page }) {

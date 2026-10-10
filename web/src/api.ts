@@ -53,6 +53,10 @@ export interface Night {
   score: number | null;
   resting_hr: number | null;
   hrv_avg: number | null;
+  respiration_avg?: number | null;
+  stress_avg?: number | null;
+  awake_count?: number | null;
+  body_battery_change?: number | null;
   stages: Stage[];
 }
 

@@ -1,10 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { getActivities, getDays, getHealth, getNights, getTrends } from "./api";
 import { BedtimeChart } from "./charts/BedtimeChart";
 import { bedtimeSpread } from "./charts/bedtime";
 import { BodyBatteryChart } from "./charts/BodyBatteryChart";
 import { DurationChart } from "./charts/DurationChart";
-import { IntensityChart } from "./charts/IntensityChart";
 import { LoadHrvChart } from "./charts/LoadHrvChart";
 import { ScoreChart } from "./charts/ScoreChart";
 import { debtText, SleepDebtChart } from "./charts/SleepDebtChart";
@@ -12,7 +11,7 @@ import { StageMixChart } from "./charts/StageMixChart";
 import { StepsChart } from "./charts/StepsChart";
 import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
-import { LastNight } from "./components/LastNight";
+import { Daily } from "./components/Daily";
 import { Nav } from "./components/Nav";
 import { RangePicker, rangeText, type Range } from "./components/RangePicker";
 import { RecordsCard } from "./components/RecordsCard";
@@ -21,23 +20,67 @@ import { Workouts } from "./components/Workouts";
 import { whatHelps } from "./insights";
 import { useLoad, type Loaded } from "./useApi";
 import { useRoute } from "./useRoute";
+import { dayParam } from "./routes";
+import { nextDate, previousDate } from "./day";
+import { longDate } from "./format";
 
 export function App() {
   const page = useRoute();
   return (
     <main>
       <Nav page={page} />
-      {page === "yesterday" ? <LastNightPage /> : <AllTime />}
+      {page === "daily" ? <DailyPage /> : <AllTime />}
     </main>
   );
 }
 
-function LastNightPage() {
+/**
+ * The Daily page. Defaults to the latest full day: the day before the latest night, so
+ * both the day's stats and the sleep after it are complete. ?day= picks another day.
+ */
+function DailyPage() {
   const health = useLoad(getHealth, "health");
+  const [day, setDay] = useState<string | null>(() => dayParam(window.location.search));
+  useEffect(() => {
+    const onPop = () => setDay(dayParam(window.location.search));
+    // Back/forward, and the Daily link in the nav (which clears ?day=).
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("navigate-page", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("navigate-page", onPop);
+    };
+  }, []);
   if (health.kind === "loading") return <div className="skeleton" style={{ height: 320 }} />;
   if (health.kind === "error") return <p className="error">Couldn't reach the API: {health.message}</p>;
   if (!health.data.latest_night) return <p className="muted">No nights yet. They appear after the first daily run.</p>;
-  return <LastNight date={health.data.latest_night} />;
+  const latest = previousDate(health.data.latest_night);
+  const shown = day && day <= latest ? day : latest;
+  const pick = (d: string) => {
+    window.history.pushState(null, "", d === latest ? "/" : `/?day=${d}`);
+    setDay(d === latest ? null : d);
+  };
+  return (
+    <>
+      <div className="section-head">
+        <div className="segmented daypick" role="group" aria-label="Day">
+          <button type="button" onClick={() => pick(previousDate(shown))} aria-label="Previous day">
+            ‹
+          </button>
+          <span className="daypick-date">{longDate(shown)}</span>
+          <button type="button" onClick={() => pick(nextDate(shown))} disabled={shown >= latest} aria-label="Next day">
+            ›
+          </button>
+        </div>
+        {shown !== latest && (
+          <button type="button" className="linkish" onClick={() => pick(latest)}>
+            Latest
+          </button>
+        )}
+      </div>
+      <Daily key={shown} day={shown} />
+    </>
+  );
 }
 
 function AllTime() {
@@ -133,17 +176,13 @@ function AllTime() {
         <Card title="Body Battery" delay={420} aside={<span className="sub">Daily low to high</span>}>
           <Body state={days} height={220} empty="No activity data in this range yet.">{(rows) => <BodyBatteryChart rows={rows} />}</Body>
         </Card>
-        <Card title="Stress" delay={460} aside={<span className="sub">Lower is usually better</span>}>
-          <Body state={days} height={200} empty="No activity data in this range yet.">
-            {(rows) => <VitalChart rows={rows} value={(r) => r.stress_avg} unit="" label="Day" avgLabel="7-day average" />}
-          </Body>
-        </Card>
-        <Card title="Intensity minutes" delay={500}>
-          <Body state={days} height={200} empty="No activity data in this range yet.">
-            {(rows) => <IntensityChart rows={rows} />}
-          </Body>
-        </Card>
       </div>
+
+      <Card title="Stress" delay={460} aside={<span className="sub">Lower is usually better</span>}>
+        <Body state={days} height={200} empty="No activity data in this range yet.">
+          {(rows) => <VitalChart rows={rows} value={(r) => r.stress_avg} unit="" label="Day" avgLabel="7-day average" />}
+        </Body>
+      </Card>
 
       <Card title="Workouts" delay={540} aside={<span className="sub">Latest 12 in range</span>}>
         <Body state={activities} height={200} empty="No workouts in this range.">
