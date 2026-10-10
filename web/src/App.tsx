@@ -5,7 +5,9 @@ import { bedtimeSpread } from "./charts/bedtime";
 import { BodyBatteryChart } from "./charts/BodyBatteryChart";
 import { DurationChart } from "./charts/DurationChart";
 import { IntensityChart } from "./charts/IntensityChart";
+import { LoadHrvChart } from "./charts/LoadHrvChart";
 import { ScoreChart } from "./charts/ScoreChart";
+import { debtText, SleepDebtChart } from "./charts/SleepDebtChart";
 import { StageMixChart } from "./charts/StageMixChart";
 import { StepsChart } from "./charts/StepsChart";
 import { VitalChart } from "./charts/VitalChart";
@@ -14,7 +16,9 @@ import { LastNight } from "./components/LastNight";
 import { Nav } from "./components/Nav";
 import { RangePicker, rangeText, type Range } from "./components/RangePicker";
 import { RecordsCard } from "./components/RecordsCard";
+import { WhatHelps } from "./components/WhatHelps";
 import { Workouts } from "./components/Workouts";
+import { whatHelps } from "./insights";
 import { useLoad, type Loaded } from "./useApi";
 import { useRoute } from "./useRoute";
 
@@ -41,6 +45,10 @@ function AllTime() {
   // Records always look at everything, whatever the range picker says.
   const allNights = useLoad(() => getNights(3650), "nights-all");
   const allDays = useLoad(() => getDays(3650).catch(() => []), "days-all");
+  // Insights also use everything: more nights make the comparisons fairer.
+  const allTrends = useLoad(() => getTrends(3650), "trends-all");
+  const allActs = useLoad(() => getActivities(3650).catch(() => []), "activities-all");
+  const insightsReady = allTrends.kind === "ready" && allDays.kind === "ready" && allActs.kind === "ready";
   const trends = useLoad(() => getTrends(range), `trends-${range}`);
   const nights = useLoad(() => getNights(range), `nights-${range}`);
   const days = useLoad(() => getDays(range), `days-${range}`);
@@ -55,6 +63,19 @@ function AllTime() {
           <RecordsCard nights={allNights.data} days={allDays.kind === "ready" ? allDays.data : []} />
         )}
       </Card>
+
+      <div className="grid-2">
+        <Card title="What helps your sleep" delay={90} aside={<span className="sub">All nights</span>}>
+          {allTrends.kind === "error" && <p className="error">Couldn't load data: {allTrends.message}</p>}
+          {allTrends.kind !== "error" && !insightsReady && <div className="skeleton" style={{ height: 220 }} />}
+          {insightsReady && <WhatHelps items={whatHelps(allTrends.data, allDays.data, allActs.data)} />}
+        </Card>
+        <Card title="Training load vs HRV" delay={120} aside={<span className="sub">All nights</span>}>
+          {allTrends.kind === "error" && <p className="error">Couldn't load data: {allTrends.message}</p>}
+          {allTrends.kind !== "error" && !insightsReady && <div className="skeleton" style={{ height: 220 }} />}
+          {insightsReady && <LoadHrvChart nights={allTrends.data} activities={allActs.data} />}
+        </Card>
+      </div>
 
       <div className="section-head">
         <RangePicker value={range} onChange={setRange} />
@@ -76,6 +97,14 @@ function AllTime() {
 
       <Card title="Sleep score" delay={180} aside={<span className="sub">{rangeText(range)}</span>}>
         <Body state={trends} height={260}>{(rows) => <ScoreChart rows={rows} />}</Body>
+      </Card>
+
+      <Card
+        title="Sleep debt"
+        delay={200}
+        aside={<span className="sub">{trends.kind === "ready" ? debtText(trends.data) || rangeText(range) : rangeText(range)}</span>}
+      >
+        <Body state={trends} height={220}>{(rows) => <SleepDebtChart rows={rows} />}</Body>
       </Card>
 
       <div className="grid-2">
