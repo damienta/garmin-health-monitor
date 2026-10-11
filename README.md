@@ -6,10 +6,6 @@
 
 ![Daily page: last night's sleep score, time asleep, HRV, resting heart rate and sleep stages](docs/images/daily-sleep.png)
 
-<p align="center">
-  <img src="docs/images/demo.gif" alt="A tour of the dashboard: last night's sleep, day stats, records, 30-day and 90-day trends" width="720">
-</p>
-
 ## What it does
 
 - **A morning sleep report.** Score, time asleep, sleep stages, HRV and resting heart rate, each compared with your usual. Every night's report has its own page.
@@ -24,6 +20,14 @@
 - **Catch problems early.** Small changes in HRV and resting heart rate are one of the best early signs of illness or overtraining. A daily light makes them hard to miss.
 - **Learn a real full-stack system on free infrastructure.** That means scheduled jobs, an API, a database, a protected website, monitoring, tests and CI, built and run like a production service at zero cost.
 - **Keep every insight explainable.** Each sentence and warning comes from a rule you can read in the code, not a black box.
+
+## Quick tour
+
+<p align="center">
+  <img src="docs/images/demo.gif" alt="A tour of the dashboard: last night's sleep, day stats, records, 30-day and 90-day trends" width="720">
+</p>
+
+Last night's sleep, the day's stats, personal records, then 30-day and 90-day trends. If it doesn't play by itself, click it: GitHub pauses animations when your device is set to reduce motion.
 
 ## Screenshots
 
@@ -123,3 +127,7 @@ You'll need a Garmin watch and free Cloudflare, GitHub and (optionally) Discord 
 | [**Garmin sign-in**](docs/GARMIN_SETUP.md) | The one-time Garmin sign-in on your laptop, and how the saved tokens keep working |
 | [**How it was built**](docs/ROADMAP.md) | The build history, one small slice at a time |
 | [**Grafana dashboard**](grafana/sleep-dashboard.json) | An importable Grafana dashboard that reads the same API |
+
+## License
+
+[MIT](LICENSE). Use it, learn from it, adapt it for your own watch.
