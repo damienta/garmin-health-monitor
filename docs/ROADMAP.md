@@ -14,7 +14,7 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | 8 | Two pages: Last night (with a written summary) and All time (best/worst nights, averages, streaks, bedtime chart) | **Done** |
 | 9 | On-time daily run (Cloudflare cron), clean URLs, recovery check, insights on Trends | **Done** |
 | 10 | Daily page: one date for a day and the sleep after it, This week card | **Done** |
-| 11 | Trends cleanup: remove workouts and training load, same start date on every chart, weekly bars past 90 days | Next |
+| 11 | Trends cleanup: same dates on every chart, weekly averages from 90 days, a colour per chart, best night of the week, docs/GUIDE.md | **Done** |
 | 12 | Find why workouts arrive as 0 (log a warning instead of failing quietly) | Planned |
 | 13 | Remove the GitHub backup schedule once the Cloudflare timer has run on its own for a week | Planned |
 | 14 | README with real screenshots and a GIF, visual first | Planned |
@@ -102,9 +102,11 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 ## Day 11: Trends cleanup
 
-- Remove the Workouts card, Training load vs HRV and the Exercise row (no workouts are arriving)
-- Every chart in a range starts on the same date; missing days are gaps
-- Past 90 days, charts switch to weekly averages so a year stays readable
+- Removed the Workouts card, Training load vs HRV and the Exercise row (no workouts are arriving)
+- Every chart in a range spans the same dates; missing days are gaps
+- 90 days and All switch to weekly averages so a year stays readable
+- Each measure has its own colour; Best night of the week replaces the training load chart
+- `docs/GUIDE.md` explains every part and every section
 
 ## Day 12: Missing workouts
 

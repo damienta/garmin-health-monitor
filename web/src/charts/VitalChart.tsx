@@ -1,6 +1,7 @@
 import { ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip } from "recharts";
 import { Tip } from "../components/Tooltip";
-import { longDate } from "../format";
+import { usePeriod } from "./period";
+import { toWeeks } from "../series";
 import { rolling7 } from "../sleep";
 import { cursorLine, grid, xAxis, yAxis } from "./axes";
 import { niceRange } from "./scale";
@@ -15,15 +16,24 @@ export function VitalChart<T extends { date: string }>({
   unit,
   label = "Night",
   avgLabel = "7-night average",
+  color,
 }: {
   rows: T[];
   value: (r: T) => number | null;
   unit: string;
   label?: string;
   avgLabel?: string;
+  /** The chart's own colour token, e.g. "var(--c-hrv)". */
+  color: string;
 }) {
-  const avg = rolling7(rows, value);
-  const data = rows.map((r, i) => ({ date: r.date, v: value(r), avg: avg[i] == null ? null : Math.round(avg[i]! * 10) / 10 }));
+  const period = usePeriod();
+  const daily = rows.map((r) => ({ date: r.date, v: value(r) }));
+  // Weekly: one dot per week (its average), no rolling line on top.
+  const avg = period.weekly ? daily.map(() => null) : rolling7(daily, (r) => r.v);
+  const data = (period.weekly ? toWeeks(daily) : daily).map((r, i) => ({
+    ...r,
+    avg: avg[i] == null ? null : Math.round(avg[i]! * 10) / 10,
+  }));
   return (
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
@@ -37,16 +47,19 @@ export function VitalChart<T extends { date: string }>({
             if (!active || !r) return null;
             return (
               <Tip
-                title={longDate(r.date)}
+                title={period.title(r.date)}
                 rows={[
-                  { label, value: r.v != null ? `${Math.round(r.v)} ${unit}` : "–", color: "var(--muted)", shape: "dot" },
-                  { label: avgLabel, value: r.avg != null ? `${r.avg} ${unit}` : "–", color: "var(--ink)", shape: "line" },
+                  { label: period.weekly ? "Weekly average" : label, value: r.v != null ? `${Math.round(r.v)} ${unit}` : "–", color, shape: "dot" },
+                  ...(period.weekly
+                    ? []
+                    : [{ label: avgLabel, value: r.avg != null ? `${r.avg} ${unit}` : "–", color: "var(--ink)", shape: "line" as const }]),
                 ]}
               />
             );
           }}
         />
-        <Scatter dataKey="v" fill="var(--muted)" stroke="var(--surface)" strokeWidth={2} isAnimationActive={false} />
+        {period.weekly && <Line dataKey="v" stroke={color} strokeWidth={2} dot={false} activeDot={false} isAnimationActive={false} connectNulls />}
+        <Scatter dataKey="v" fill={color} stroke="var(--surface)" strokeWidth={2} isAnimationActive={false} />
         <Line
           dataKey="avg"
           stroke="var(--ink)"

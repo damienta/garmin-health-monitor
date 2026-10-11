@@ -1,8 +1,9 @@
 import { Bar, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
 import type { TrendRow } from "../api";
 import { Tip } from "../components/Tooltip";
-import { longDate } from "../format";
-import { sleepDebt } from "../insights";
+import { usePeriod } from "./period";
+import { weekStart } from "../series";
+import { type DebtRow, sleepDebt } from "../insights";
 import { hm } from "../sleep";
 import { cursorBand, grid, xAxis, yAxis } from "./axes";
 
@@ -13,8 +14,11 @@ const signed = (h: number | null) => (h == null ? "–" : `${h < 0 ? "−" : "+"
  * the last 7 nights (the line). The line dipping well below zero is sleep debt building.
  */
 export function SleepDebtChart({ rows }: { rows: TrendRow[] }) {
-  const { usual_h, rows: data } = sleepDebt(rows);
+  const period = usePeriod();
+  const { usual_h, rows: daily } = sleepDebt(rows);
   if (usual_h == null) return <p className="muted">No nights in this range yet.</p>;
+  // Weekly: each bar is the week's total vs your usual; the 7-night line is dropped.
+  const data = period.weekly ? weeklyTotals(daily) : daily;
   const values = data.flatMap((d) => [d.diff_h, d.debt_7d]).filter((v): v is number => v != null);
   // Whole hours either side of zero, ticks every hour (every 2 when the range is wide).
   const lo = Math.floor(Math.min(0, ...values));
@@ -36,30 +40,45 @@ export function SleepDebtChart({ rows }: { rows: TrendRow[] }) {
               if (!active || !r) return null;
               return (
                 <Tip
-                  title={longDate(r.date)}
+                  title={period.title(r.date)}
                   rows={[
-                    { label: "vs usual", value: signed(r.diff_h), color: "var(--bar)" },
-                    { label: "Last 7 nights", value: signed(r.debt_7d), color: "var(--ink)", shape: "line" },
+                    { label: period.weekly ? "Week vs usual" : "vs usual", value: signed(r.diff_h), color: "var(--c-sleep)" },
+                    ...(period.weekly
+                      ? []
+                      : [{ label: "Last 7 nights", value: signed(r.debt_7d), color: "var(--ink)", shape: "line" as const }]),
                   ]}
                 />
               );
             }}
           />
           <ReferenceLine y={0} stroke="var(--axis)" />
-          <Bar dataKey="diff_h" fill="var(--bar)" maxBarSize={24} radius={2} isAnimationActive={false} />
+          <Bar dataKey="diff_h" fill="var(--c-sleep)" maxBarSize={24} radius={2} isAnimationActive={false} />
           <Line dataKey="debt_7d" stroke="var(--ink)" strokeWidth={2} dot={false} activeDot={false} isAnimationActive={false} connectNulls />
         </ComposedChart>
       </ResponsiveContainer>
       <div className="legend">
         <span>
-          <span className="swatch" style={{ background: "var(--bar)" }} /> Night vs your usual {hm(usual_h * 3600)}
+          <span className="swatch" style={{ background: "var(--c-sleep)" }} /> {period.weekly ? "Week" : "Night"} vs your usual{" "}
+          {hm(usual_h * 3600)} a night
         </span>
-        <span>
-          <span className="swatch line" style={{ background: "var(--ink)" }} /> Running total, last 7 nights
-        </span>
+        {!period.weekly && (
+          <span>
+            <span className="swatch line" style={{ background: "var(--ink)" }} /> Running total, last 7 nights
+          </span>
+        )}
       </div>
     </>
   );
+}
+
+function weeklyTotals(rows: DebtRow[]): DebtRow[] {
+  const weeks = new Map<string, number[]>();
+  for (const r of rows) {
+    const w = weekStart(r.date);
+    if (!weeks.has(w)) weeks.set(w, []);
+    if (r.diff_h != null) weeks.get(w)!.push(r.diff_h);
+  }
+  return [...weeks].map(([date, xs]) => ({ date, diff_h: xs.length ? xs.reduce((a, b) => a + b, 0) : null, debt_7d: null }));
 }
 
 /** "Last 7 nights: 1h 20m short of your usual" for the card's corner. */

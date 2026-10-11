@@ -1,7 +1,8 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { DayRow } from "../api";
 import { Tip } from "../components/Tooltip";
-import { longDate } from "../format";
+import { usePeriod } from "./period";
+import { toWeeks } from "../series";
 import { cursorBand, grid, xAxis, yAxis } from "./axes";
 
 /**
@@ -9,7 +10,10 @@ import { cursorBand, grid, xAxis, yAxis } from "./axes";
  * short bar high up is a well-rested day and a long bar reaching low is a draining one.
  */
 export function BodyBatteryChart({ rows }: { rows: DayRow[] }) {
-  const data = rows.map((r) => ({
+  const period = usePeriod();
+  const shaped = period.weekly ? toWeeks(rows, ["steps_7d"]) : rows;
+  const r0 = (v: number | null) => (v == null ? null : Math.round(v));
+  const data = shaped.map((r) => ({
     ...r,
     range: r.bb_low != null && r.bb_high != null ? [r.bb_low, r.bb_high] : null,
   }));
@@ -26,18 +30,18 @@ export function BodyBatteryChart({ rows }: { rows: DayRow[] }) {
             if (!active || !r) return null;
             return (
               <Tip
-                title={longDate(r.date)}
+                title={period.title(r.date)}
                 rows={[
-                  { label: "Highest", value: r.bb_high ?? "–", color: "var(--ink)" },
-                  { label: "Lowest", value: r.bb_low ?? "–", color: "var(--bar)" },
-                  { label: "Charged", value: r.bb_charged != null ? `+${r.bb_charged}` : "–" },
-                  { label: "Drained", value: r.bb_drained != null ? `−${r.bb_drained}` : "–" },
+                  { label: period.weekly ? "Average high" : "Highest", value: r0(r.bb_high) ?? "–" },
+                  { label: period.weekly ? "Average low" : "Lowest", value: r0(r.bb_low) ?? "–" },
+                  { label: "Charged", value: r.bb_charged != null ? `+${r0(r.bb_charged)}` : "–" },
+                  { label: "Drained", value: r.bb_drained != null ? `−${r0(r.bb_drained)}` : "–" },
                 ]}
               />
             );
           }}
         />
-        <Bar dataKey="range" fill="var(--bar)" maxBarSize={24} radius={4} isAnimationActive={false} />
+        <Bar dataKey="range" fill="var(--c-bb)" maxBarSize={24} radius={4} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>
   );

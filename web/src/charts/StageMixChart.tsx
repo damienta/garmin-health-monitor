@@ -1,13 +1,15 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { NightRow } from "../api";
 import { Tip } from "../components/Tooltip";
-import { longDate } from "../format";
+import { usePeriod } from "./period";
+import { toWeeks } from "../series";
 import { hm, STAGES } from "../sleep";
 import { cursorBand, grid, xAxis, yAxis } from "./axes";
 
 /** Each night as a stacked column of stage hours. A 2px surface gap separates segments. */
 export function StageMixChart({ rows }: { rows: NightRow[] }) {
-  const data = rows.map((r) => ({
+  const period = usePeriod();
+  const data = (period.weekly ? toWeeks(rows) : rows).map((r) => ({
     date: r.date,
     deep: (r.deep_s ?? 0) / 3600,
     light: (r.light_s ?? 0) / 3600,
@@ -28,7 +30,7 @@ export function StageMixChart({ rows }: { rows: NightRow[] }) {
               if (!active || !r) return null;
               return (
                 <Tip
-                  title={longDate(r.date)}
+                  title={period.title(r.date)}
                   rows={[...STAGES].reverse().map((s) => ({ label: s.label, value: hm(r[s.key] * 3600), color: s.color }))}
                 />
               );

@@ -2,7 +2,7 @@
 
 Personal sleep monitor for my Garmin watch: a Python collector pulls each night's sleep from Garmin Connect, and later slices store it (Cloudflare Worker + D1) and chart it (Grafana, then a small frontend). Everything runs on free plans.
 
-Built in daily slices; see [`docs/ROADMAP.md`](docs/ROADMAP.md).
+How it all works, and what every section of the website means: [`docs/GUIDE.md`](docs/GUIDE.md). Build history: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Status
 
