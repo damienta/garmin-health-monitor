@@ -18,10 +18,22 @@ const median = (xs: number[]) => {
 /** Each group needs this many nights before we compare, so one odd night can't decide. */
 export const MIN_GROUP = 5;
 
+/** A score gap smaller than this is noise, not a pattern. */
+export const REAL_DIFF = 3;
+
+export interface Side {
+  /** Short, for the bar: "9,000+ steps". */
+  label: string;
+  /** Reads after "Your score is higher ": "after days with 9,000+ steps". */
+  phrase: string;
+  score: number;
+  nights: number;
+}
+
 export interface Comparison {
   factor: string;
-  a: { label: string; score: number; nights: number };
-  b: { label: string; score: number; nights: number };
+  a: Side;
+  b: Side;
   /** a.score - b.score */
   diff: number;
 }
@@ -40,7 +52,7 @@ function compare(
   factor: string,
   ps: Pair[],
   inA: (p: Pair) => boolean | null,
-  labels: [string, string],
+  labels: [[string, string], [string, string]],
 ): Comparison | null {
   const a: number[] = [];
   const b: number[] = [];
@@ -54,8 +66,8 @@ function compare(
   const sb = avg(b)!;
   return {
     factor,
-    a: { label: labels[0], score: sa, nights: a.length },
-    b: { label: labels[1], score: sb, nights: b.length },
+    a: { label: labels[0][0], phrase: labels[0][1], score: sa, nights: a.length },
+    b: { label: labels[1][0], phrase: labels[1][1], score: sb, nights: b.length },
     diff: sa - sb,
   };
 }
@@ -75,8 +87,8 @@ export function whatHelps(nights: TrendRow[], days: DayRow[]): Comparison[] {
     const cut = roundTo(median(steps), 500);
     out.push(
       compare("Steps", ps, (p) => (p.day?.steps == null ? null : p.day.steps >= cut), [
-        `${cut.toLocaleString("en-GB")}+ steps`,
-        "fewer steps",
+        [`${cut.toLocaleString("en-GB")}+ steps`, `after days with ${cut.toLocaleString("en-GB")}+ steps`],
+        ["Fewer steps", "after days with fewer steps"],
       ]),
     );
   }
@@ -86,8 +98,8 @@ export function whatHelps(nights: TrendRow[], days: DayRow[]): Comparison[] {
     const cut = Math.round(median(stress));
     out.push(
       compare("Stress", ps, (p) => (p.day?.stress_avg == null ? null : p.day.stress_avg <= cut), [
-        `calm days (stress ${cut} or under)`,
-        "stressful days",
+        [`Stress ${cut} or under`, "after calmer days"],
+        [`Stress over ${cut}`, "after more stressful days"],
       ]),
     );
   }
@@ -97,8 +109,8 @@ export function whatHelps(nights: TrendRow[], days: DayRow[]): Comparison[] {
     const cut = roundTo(median(beds), 15);
     out.push(
       compare("Bedtime", ps, (p) => (p.night.bedtime_min == null ? null : p.night.bedtime_min <= cut), [
-        `asleep by ${clockOf(cut)}`,
-        `asleep after ${clockOf(cut)}`,
+        [`Asleep by ${clockOf(cut)}`, `on nights you're asleep by ${clockOf(cut)}`],
+        [`Asleep after ${clockOf(cut)}`, `on nights you're asleep after ${clockOf(cut)}`],
       ]),
     );
   }

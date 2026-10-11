@@ -35,7 +35,10 @@ describe("whatHelps", () => {
     expect(steps.b.score).toBe(70);
     expect(steps.diff).toBe(15);
     expect(out.find((c) => c.factor === "Stress")!.diff).toBe(15);
-    expect(out.find((c) => c.factor === "Bedtime")!.a.label).toMatch(/^asleep by /);
+    const bed = out.find((c) => c.factor === "Bedtime")!;
+    expect(bed.a.label).toMatch(/^Asleep by /);
+    expect(bed.a.phrase).toMatch(/^on nights you.re asleep by /);
+    expect(out.find((c) => c.factor === "Steps")!.a.phrase).toBe("after days with 12,000+ steps");
   });
 
   it("stays quiet without enough nights on both sides", () => {
