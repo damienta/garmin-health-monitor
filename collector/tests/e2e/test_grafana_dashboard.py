@@ -19,7 +19,10 @@ URL = os.environ.get("E2E_URL")
 INGEST = os.environ.get("E2E_INGEST_TOKEN", "dev-ingest-token")
 READ = os.environ.get("E2E_READ_TOKEN", "dev-read-token")
 ROOT = Path(__file__).parents[3]
-DASHBOARD = json.loads((ROOT / "grafana" / "sleep-dashboard.json").read_text())
+DASHBOARDS = {
+    name: json.loads((ROOT / "grafana" / f"{name}-dashboard.json").read_text())
+    for name in ("sleep", "system")
+}
 FIXTURE = json.loads((Path(__file__).parents[1] / "fixtures" / "sleep_synthetic.json").read_text())
 
 pytestmark = pytest.mark.skipif(not URL, reason="E2E_URL not set")
@@ -32,9 +35,10 @@ MACROS = {
 
 
 def queries():
-    for panel in DASHBOARD["panels"]:
-        for target in panel["targets"]:
-            yield pytest.param(panel["title"], target, id=panel["title"])
+    for name, dashboard in DASHBOARDS.items():
+        for panel in dashboard["panels"]:
+            for target in panel["targets"]:
+                yield pytest.param(panel["title"], target, id=f"{name}: {panel['title']}")
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -63,7 +67,9 @@ def test_panel_query_matches_api(title, target):
         assert col["selector"] in rows[0], f"{title}: field {col['selector']!r} missing from {path}"
 
 
-def test_dashboard_uses_infinity_input():
-    assert DASHBOARD["__inputs"][0]["pluginId"] == "yesoreyeram-infinity-datasource"
-    for panel in DASHBOARD["panels"]:
+@pytest.mark.parametrize("name", list(DASHBOARDS))
+def test_dashboard_uses_infinity_input(name):
+    dashboard = DASHBOARDS[name]
+    assert dashboard["__inputs"][0]["pluginId"] == "yesoreyeram-infinity-datasource"
+    for panel in dashboard["panels"]:
         assert panel["datasource"]["uid"] == "${DS_INFINITY}", panel["title"]

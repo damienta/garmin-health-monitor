@@ -251,6 +251,18 @@ app.get("/api/summary", read, async (c) => {
   return c.json([{ from, to, ...rest, bedtime_mean_min, bedtime_sd_min }]);
 });
 
+// Upload history for the Grafana "System health" dashboard: one row per upload from the
+// collector (a daily run makes one; a long backfill makes a few), newest first.
+app.get("/api/runs", read, async (c) => {
+  const { days } = RangeQuery.parse(c.req.query());
+  const since = now() - days * 86400;
+  const { results } = await c.env.DB.prepare(
+    `SELECT received_at * 1000 AS time, source, nights FROM ingest_runs
+     WHERE received_at >= ?1 ORDER BY received_at DESC LIMIT 500`,
+  ).bind(since).all();
+  return c.json(results);
+});
+
 app.get("/api/health", read, async (c) => {
   const last = await c.env.DB.prepare(
     `SELECT received_at, source, nights FROM ingest_runs ORDER BY received_at DESC LIMIT 1`,

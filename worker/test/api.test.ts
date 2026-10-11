@@ -86,3 +86,22 @@ describe("reads", () => {
     expect(health.ok).toBe(true);
   });
 });
+
+describe("GET /api/runs", () => {
+  it("lists uploads newest first, read token only", async () => {
+    for (const date of ["2026-09-29", "2026-09-30"]) {
+      await call("/api/ingest", {
+        method: "POST",
+        headers: INGEST,
+        body: JSON.stringify({ source: "runs-test", nights: [night(date)] }),
+      });
+    }
+    const res = await call("/api/runs?days=7", { headers: READ });
+    expect(res.status).toBe(200);
+    const rows = (await res.json()) as { time: number; source: string; nights: number }[];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows[0]).toMatchObject({ source: "runs-test", nights: 1 });
+    expect(rows[0].time).toBeGreaterThanOrEqual(rows[1].time);
+    expect((await call("/api/runs", { headers: INGEST })).status).toBe(401);
+  });
+});
