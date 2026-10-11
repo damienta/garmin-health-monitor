@@ -75,3 +75,15 @@ def push(url: str, token: str, body: dict, path: str = "/api/ingest") -> dict:
     )
     r.raise_for_status()
     return r.json()
+
+
+def get_vitals(url: str, token: str, days: int = 45) -> list[dict]:
+    """Recent nights' HRV and resting HR from the Worker, for the recovery light."""
+    r = requests.get(
+        url.rstrip("/") + "/api/ingest/vitals",
+        params={"days": days},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json()

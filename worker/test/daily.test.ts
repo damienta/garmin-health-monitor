@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { call, getJson, INGEST, READ } from "./helpers";
+import { call, getJson, INGEST, night, READ } from "./helpers";
 
 const day = (date: string, overrides: Record<string, unknown> = {}) => ({
   date,
@@ -84,5 +84,22 @@ describe("daily ingest", () => {
   it("reads need the read token", async () => {
     expect((await call("/api/days")).status).toBe(401);
     expect((await call("/api/activities")).status).toBe(401);
+  });
+});
+
+describe("vitals for the morning message", () => {
+  it("returns HRV and resting HR per night with the ingest token only", async () => {
+    await call("/api/ingest", {
+      method: "POST",
+      headers: INGEST,
+      body: JSON.stringify({ source: "test", nights: [night("2026-09-29"), night("2026-09-30", { hrv_avg: 40 })] }),
+    });
+    const res = await call("/api/ingest/vitals?from=2026-09-01&to=2026-09-30", { headers: INGEST });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([
+      { date: "2026-09-29", hrv_avg: 62, resting_hr: 48 },
+      { date: "2026-09-30", hrv_avg: 40, resting_hr: 48 },
+    ]);
+    expect((await call("/api/ingest/vitals", { headers: READ })).status).toBe(401);
   });
 });

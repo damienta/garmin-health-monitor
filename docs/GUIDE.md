@@ -20,7 +20,7 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 - It logs in to Garmin Connect with saved tokens. It never uses your password in the cloud.
 - For each recent day it reads that night's sleep plus the day's stats (steps, stress, Body Battery). It sends them to the API.
 - Each run re-reads the last 3 days (14 on Sundays). So a late watch sync is picked up the next morning.
-- Afterwards it posts a short morning message to Discord.
+- Afterwards it posts a short morning message to Discord: last night, the recovery light, and the day's steps, stress and Body Battery.
 
 ### The daily run (`.github/workflows/collect.yml` and the Cloudflare timer)
 
@@ -50,7 +50,7 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 ### Grafana and Discord
 
 - **Grafana Cloud** reads the same API through the Infinity plugin. It also has a "data stale" alert.
-- **Discord** gets the morning summary, plus a ❌ ping if the daily run fails.
+- **Discord** gets the morning summary with the recovery light (🟢 / 🟠 / 🔴, same rules as the website), plus a ❌ ping if the daily run fails. The collector reads your recent HRV and resting HR from `GET /api/ingest/vitals` to work out your normal.
 
 ## The website
 

@@ -132,6 +132,16 @@ app.post("/api/ingest/daily", bearer("INGEST_TOKEN"), async (c) => {
 // ---------- read (Grafana) ----------
 // Every row carries `time` in epoch ms, which Grafana's Infinity datasource uses as the x axis.
 
+// HRV and resting HR for recent nights, for the collector's morning message (the
+// recovery light). Uses the collector's own token, so it needs no extra secret.
+app.get("/api/ingest/vitals", bearer("INGEST_TOKEN"), async (c) => {
+  const { from, to } = range(c.req.query());
+  const { results } = await c.env.DB.prepare(
+    `SELECT date, hrv_avg, resting_hr FROM sleep_nights WHERE date BETWEEN ?1 AND ?2 ORDER BY date`,
+  ).bind(from, to).all();
+  return c.json(results);
+});
+
 const read = bearer("READ_TOKEN");
 
 app.get("/api/nights", read, async (c) => {
