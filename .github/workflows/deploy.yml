@@ -3,7 +3,7 @@ name: deploy
 on:
   push:
     branches: [main]
-    paths: ["worker/**"]
+    paths: ["worker/**", ".github/workflows/deploy.yml", ".github/scripts/smoke.sh"]
   workflow_dispatch:
 
 concurrency:
@@ -43,3 +43,21 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
           command: deploy
+
+      # Smoke test: the live API answers, and still refuses requests without a token.
+      - name: Check the live API
+        working-directory: .
+        env:
+          API_URL: ${{ secrets.INGEST_URL }}
+        run: .github/scripts/smoke.sh api "$API_URL"
+
+      # Phone ping if the deploy or the live check failed.
+      - name: Tell Discord the deploy failed
+        if: ${{ failure() }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$DISCORD_WEBHOOK_URL" ] || exit 0
+          printf '{"content":"❌ %s deploy failed. Log: %s"}' "API" "$RUN_URL" \
+            | curl -fsS -m 10 --retry 3 -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL" >/dev/null
