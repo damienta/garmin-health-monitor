@@ -95,11 +95,13 @@ function AllTime() {
   const nights = useLoad(() => getNights(range), `nights-${range}`);
   const days = useLoad(() => getDays(range), `days-${range}`);
 
-  // Every chart spans the same dates: the range's first day (or, for All, your first
-  // night) up to today. Days with no data become gaps instead of shortening a chart.
+  // Every chart spans the same dates: the range's first day (or your first night, if
+  // that's later) up to today. Days with no data become gaps instead of shortening a chart.
   const to = new Date().toISOString().slice(0, 10);
   const firstNight = allTrends.kind === "ready" && allTrends.data.length ? allTrends.data[0].date : to;
-  const from = range === 3650 ? firstNight : addDays(to, -(range - 1));
+  // Never start before your first night, so a long range has no empty stretch on the left.
+  const rangeStart = addDays(to, -(range - 1));
+  const from = range === 3650 || rangeStart < firstNight ? firstNight : rangeStart;
   const span = <T extends { date: string }>(state: Loaded<T[]>, empty: (date: string) => T): Loaded<T[]> =>
     state.kind === "ready" && state.data.length ? { kind: "ready", data: padDates(state.data, from, to, empty) } : state;
   const weekly = range >= WEEKLY_FROM;
