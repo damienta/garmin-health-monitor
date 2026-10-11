@@ -1,8 +1,9 @@
-import { type Comparison, MIN_GROUP } from "../insights";
+import { type Comparison, MIN_GROUP, REAL_DIFF } from "../insights";
 
 /**
- * Your sleep score after different kinds of day, side by side. Two quiet bars per factor
- * (the score colour for the first group, grey for the second) and a plain sentence with the gap.
+ * Your sleep score after different kinds of day. Each factor gets one plain sentence
+ * naming the side you sleep better on, and two bars: the better side in the score
+ * colour, the other in grey. Gaps under 3 points read as no clear difference.
  */
 export function WhatHelps({ items }: { items: Comparison[] }) {
   if (!items.length) {
@@ -11,36 +12,35 @@ export function WhatHelps({ items }: { items: Comparison[] }) {
   return (
     <div className="helps">
       {items.map((c) => {
-        const small = Math.abs(c.diff) < 2;
+        const win = c.diff >= 0 ? c.a : c.b;
+        const clear = Math.abs(c.diff) >= REAL_DIFF;
         return (
           <div className="helps-row" key={c.factor}>
             <div className="stat-label">{c.factor}</div>
             <p className="helps-text">
-              {small ? (
-                <>No real difference ({Math.round(c.a.score)} vs {Math.round(c.b.score)}).</>
-              ) : (
+              {clear ? (
                 <>
-                  You score <strong>{Math.round(Math.abs(c.diff))} points {c.diff > 0 ? "higher" : "lower"}</strong> after{" "}
-                  {c.a.label} than after {c.b.label}.
+                  Your score is <strong>{Math.round(Math.abs(c.diff))} points higher</strong> {win.phrase}.
                 </>
+              ) : (
+                <>No clear difference yet.</>
               )}
             </p>
-            <Bar label={c.a.label} score={c.a.score} nights={c.a.nights} ink />
-            <Bar label={c.b.label} score={c.b.score} nights={c.b.nights} />
+            <Bar label={c.a.label} score={c.a.score} nights={c.a.nights} highlight={clear && win === c.a} />
+            <Bar label={c.b.label} score={c.b.score} nights={c.b.nights} highlight={clear && win === c.b} />
           </div>
         );
       })}
-      <p className="muted small">Average sleep score the night after. Correlation, not proof: other things change too.</p>
     </div>
   );
 }
 
-function Bar({ label, score, nights, ink = false }: { label: string; score: number; nights: number; ink?: boolean }) {
+function Bar({ label, score, nights, highlight }: { label: string; score: number; nights: number; highlight: boolean }) {
   return (
     <div className="helps-bar" title={`${nights} nights`}>
       <span className="helps-label">{label}</span>
       <span className="helps-track">
-        <span style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: ink ? "var(--c-score)" : "var(--bar)" }} />
+        <span style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: highlight ? "var(--c-score)" : "var(--bar)" }} />
       </span>
       <span className="helps-value">{Math.round(score)}</span>
     </div>
