@@ -2,7 +2,7 @@
 
 **A personal sleep and recovery dashboard for my Garmin watch. It updates itself every morning and runs entirely on free plans.**
 
-**Docs:** [**How it works**](docs/GUIDE.md) · [**Setup**](docs/SETUP.md) · [**Garmin sign-in**](docs/GARMIN_SETUP.md) · [**How it was built**](docs/ROADMAP.md)
+**Docs:** [**How it works**](docs/GUIDE.md) · [**Setup**](docs/SETUP.md) · [**Garmin sign-in**](docs/GARMIN_SETUP.md) · [**Grafana**](docs/GRAFANA.md) · [**How it was built**](docs/ROADMAP.md)
 
 ![Daily page: last night's sleep score, time asleep, HRV, resting heart rate and sleep stages](docs/images/daily-sleep.png)
 
@@ -61,7 +61,7 @@ flowchart LR
 2. **The collector** signs in to Garmin Connect with saved tokens (never a password in the cloud). It reads the last few nights and days and sends them to the API.
 3. **The API** is a Cloudflare Worker with a D1 (SQLite) database. It stores everything and serves it back with 7-night averages already worked out.
 4. **The website** is a React app on a second Worker, behind Cloudflare Access, so only I can open it. The browser never holds an API token. The website's Worker adds it on the server side.
-5. **Discord** gets the morning summary. **healthchecks.io** emails me if a run doesn't happen. **Grafana** has a second dashboard and a "data is stale" alert.
+5. **Discord** gets the morning summary. **healthchecks.io** emails me if a run doesn't happen. **Grafana** has a sleep dashboard, a **System health** dashboard (when data last arrived, every upload) and a "no data" alert.
 
 ## Tech stack
 
@@ -126,7 +126,7 @@ You'll need a Garmin watch and free Cloudflare, GitHub and (optionally) Discord 
 | [**Setup**](docs/SETUP.md) | Step-by-step: Cloudflare, healthchecks.io, GitHub secrets, the first run and the 09:23 timer |
 | [**Garmin sign-in**](docs/GARMIN_SETUP.md) | The one-time Garmin sign-in on your laptop, and how the saved tokens keep working |
 | [**How it was built**](docs/ROADMAP.md) | The build history, one small slice at a time |
-| [**Grafana dashboard**](grafana/sleep-dashboard.json) | An importable Grafana dashboard that reads the same API |
+| [**Grafana**](docs/GRAFANA.md) | Two importable dashboards (Sleep, System health), what each panel means, and the Discord alert |
 
 ## License
 
