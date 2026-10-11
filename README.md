@@ -1,11 +1,14 @@
 # Garmin Health Monitor
 
-**A private sleep and recovery dashboard for my Garmin watch. It updates itself every morning and runs entirely on free plans.**
+**A personal sleep and recovery dashboard for my Garmin watch. It updates itself every morning and runs entirely on free plans.**
 
-[![ci](https://github.com/damienta/garmin-health-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/damienta/garmin-health-monitor/actions/workflows/ci.yml)
-[![collect](https://github.com/damienta/garmin-health-monitor/actions/workflows/collect.yml/badge.svg)](https://github.com/damienta/garmin-health-monitor/actions/workflows/collect.yml)
+**Docs:** [**How it works**](docs/GUIDE.md) · [**Setup**](docs/SETUP.md) · [**Garmin sign-in**](docs/GARMIN_SETUP.md) · [**How it was built**](docs/ROADMAP.md)
 
 ![Daily page: last night's sleep score, time asleep, HRV, resting heart rate and sleep stages](docs/images/daily-sleep.png)
+
+<p align="center">
+  <img src="docs/images/demo.gif" alt="A tour of the dashboard: last night's sleep, day stats, records, 30-day and 90-day trends" width="720">
+</p>
 
 ## What it does
 
@@ -31,11 +34,11 @@
 | ![Sleep window and sleep score over 30 days](docs/images/trends-30-days.png) | ![90 days shown as weekly averages](docs/images/trends-90-days.png) |
 | **30 days:** when you fell asleep and woke, and your score with a 7-night average | **90 days:** long ranges switch to weekly averages |
 
-<p>
-  <img src="docs/images/discord.png" alt="Discord morning message with last night's score, stages, vitals, recovery light and the day's steps" width="380">
-  &nbsp;
-  <img src="docs/images/browser.webp" alt="The website in the browser" width="560">
-</p>
+### Every morning in Discord
+
+<img src="docs/images/discord.png" alt="Discord morning message: last night's score, stages, HRV and resting heart rate, the recovery light, and the day's steps, stress and Body Battery" width="420">
+
+Last night's score and stages, HRV and resting heart rate, the recovery light, and the day before's steps, stress and Body Battery. It arrives after the 09:23 run, with no app to open.
 
 ## How it works
 
@@ -66,23 +69,39 @@ flowchart LR
 | Automation | GitHub Actions (CI, daily collect, deploys), Cloudflare Cron Triggers, Dependabot |
 | Monitoring | Discord webhooks, healthchecks.io, Grafana Cloud |
 
-## Engineering highlights
+## Engineering and best practices
 
-- **Security first.**
-  - Garmin is signed in once, on my laptop. CI only ever uses refreshed tokens, which carry over between runs.
-  - Every secret lives in GitHub or Cloudflare, never in the code.
-  - The website checks the Cloudflare Access login itself and only allows reads.
-- **Tested end to end.** About 150 tests across the three parts:
-  - parsing against real-shaped Garmin data
+**Security**
+- **No password in the cloud.** Garmin is signed in once, on my laptop. The daily job only uses saved tokens, refreshed on every run and carried over between runs.
+- **Secrets stay secret.** Every key lives in GitHub or Cloudflare secrets, never in the code. Personal health data and token files are git-ignored.
+- **Least privilege.**
+  - The collector's token can only write. The website's token can only read.
+  - The browser never holds either: the website's Worker adds the read token on the server side.
+  - The GitHub token Cloudflare uses can only start this repo's Actions.
+- **Locked-down website.** Cloudflare Access lets only me in, the Worker checks the Access login itself (JWT), and it only allows reads.
+
+**Quality**
+- **Tests at every layer, about 150 in total.**
+  - collector parsing against real-shaped Garmin data
   - the API running in a local Workers runtime
   - an end-to-end test that runs the collector against a real local API
-  - unit tests for every insight rule
+  - unit tests for every chart helper and insight rule
+- **CI on every pull request**, on Linux and Windows. It covers linting (Ruff), formatting, type checks (TypeScript), all tests and a production build.
+- **Small pull requests, merged only when green.** Each one explains what changed and why.
+- **Dependabot keeps things up to date.** It opens pull requests for new versions of every dependency: weekly for the Python collector, monthly for the API, the website and the GitHub Actions. Updates are grouped, so each part gets one pull request. CI tests every update before it's merged. Known-incompatible upgrades, like vitest 5 with the Workers test pool, are held back with a note explaining why.
 
-  CI runs on every pull request, on Linux and Windows.
-- **Self-healing daily job.**
-  - On-time start, plus a backup schedule that skips itself if the day's run already worked.
-  - Re-sending data is always safe: every save overwrites by date.
-  - Each run re-reads the last 3 days (14 on Sundays), so a late watch sync is picked up the next morning.
+**Reliability**
+- **On time, every day.** A Cloudflare timer starts the run at 09:23, plus a backup schedule that skips itself if the day's run already worked.
+- **Safe to re-run.** Every save overwrites by date, so retries and overlapping fetches never create duplicates. Each run re-reads the last 3 days (14 on Sundays) to catch late watch syncs.
+- **Fails loudly.**
+  - A ❌ Discord ping if a run fails.
+  - healthchecks.io emails me if no run arrives.
+  - A Grafana alert if the data goes stale.
+  - A warning two weeks before the Garmin sign-in would expire.
+
+**Design**
+- **Explainable insights.** Every summary sentence, warning and comparison is a short rule in TypeScript or Python, with tests. No AI, no running cost.
+- **Accessible charts.** One colour per measure, with side-by-side pairs checked for colour-blind readers in light and dark mode. Every chart has a tooltip, and colour is never the only signal.
 - **Runs on free plans only.** It works within the limits of each, for example D1's 50-queries-per-request cap.
 
 ## Run your own
@@ -97,6 +116,10 @@ You'll need a Garmin watch and free Cloudflare, GitHub and (optionally) Discord 
 
 ## Docs
 
-- [`docs/GUIDE.md`](docs/GUIDE.md): how every part works, and what each card and chart on the website means
-- [`docs/SETUP.md`](docs/SETUP.md) and [`docs/GARMIN_SETUP.md`](docs/GARMIN_SETUP.md): step-by-step setup
-- [`docs/ROADMAP.md`](docs/ROADMAP.md): how it was built, one small slice at a time
+| Doc | What's inside |
+| --- | --- |
+| [**How it works**](docs/GUIDE.md) | Every part of the system, from the watch to the website, and what each card and chart means |
+| [**Setup**](docs/SETUP.md) | Step-by-step: Cloudflare, healthchecks.io, GitHub secrets, the first run and the 09:23 timer |
+| [**Garmin sign-in**](docs/GARMIN_SETUP.md) | The one-time Garmin sign-in on your laptop, and how the saved tokens keep working |
+| [**How it was built**](docs/ROADMAP.md) | The build history, one small slice at a time |
+| [**Grafana dashboard**](grafana/sleep-dashboard.json) | An importable Grafana dashboard that reads the same API |
