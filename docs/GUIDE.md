@@ -33,6 +33,14 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 - **The backup:** GitHub's own schedule still runs at 13:23. It skips itself if today's run already worked.
 - If a run fails, Discord gets a ❌ message. If no run arrives at all, healthchecks.io emails you.
 
+### Tests and deploys (`.github/workflows/`)
+
+- **Every pull request** runs `ci.yml`. It covers lint, format and type checks, about 150 tests (collector, API, website, end to end) and a production build, on Linux and Windows. Everything runs on made-up test data: a fake Garmin server and a throwaway local database, never your account.
+- **Every merge to main** that touches `worker/` or `web/` runs `deploy.yml` / `deploy-web.yml`. These test again, deploy to Cloudflare, then run a **smoke test** on the live site (`.github/scripts/smoke.sh`):
+  - The API must still refuse a request without a token (401).
+  - The website must still send signed-out visitors to the Cloudflare Access sign-in page.
+  - If either check fails, Discord gets a ❌ message.
+
 ### The API and database (`worker/`)
 
 - A Cloudflare Worker, a small program that runs on Cloudflare's servers, holds the data in D1 (SQLite).
