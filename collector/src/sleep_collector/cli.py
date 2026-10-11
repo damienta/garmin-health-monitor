@@ -16,7 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import garmin, notify, push
+from . import garmin, notify, push, recovery
 from .parse import parse_activity, parse_day, parse_sleep
 from .tokens import load_token_infos, refresh_expiring_within
 
@@ -138,11 +138,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         days_sent += len(body["days"])
         acts_sent += len(body["activities"])
     print(f"Pushed {days_sent} days and {acts_sent} activities")
-    _notify(raw, stats)
+    _notify(raw, stats, url=url, token=token)
     return 0
 
 
-def _notify(raw: dict[str, dict], stats: dict[str, dict] | None = None) -> None:
+def _notify(
+    raw: dict[str, dict],
+    stats: dict[str, dict] | None = None,
+    url: str | None = None,
+    token: str | None = None,
+) -> None:
     """Post the newest night (and yesterday's activity) to Discord if DISCORD_WEBHOOK_URL is set.
 
     Runs after the data is saved, and a Discord problem never fails the run.
@@ -153,6 +158,14 @@ def _notify(raw: dict[str, dict], stats: dict[str, dict] | None = None) -> None:
     nights = [n for n in (parse_sleep(p) for p in raw.values()) if n is not None]
     latest = max(nights, key=lambda n: n.date, default=None)
     message = notify.night_message(latest, expected=max(raw))
+    # The recovery light needs your last 30 nights, which only the Worker has.
+    if latest is not None and url and token:
+        try:
+            line = notify.recovery_line(recovery.check(push.get_vitals(url, token), latest.date))
+            if line:
+                message += "\n" + line
+        except Exception as e:
+            print(f"WARNING: recovery light skipped: {type(e).__name__}", file=sys.stderr)
     # Yesterday = the last full day before the newest date fetched.
     yesterday = sorted(d for d in (stats or {}) if d < max(raw))[-1:]
     if yesterday:

@@ -11,6 +11,7 @@ from datetime import date
 import requests
 
 from .parse import Day, Night
+from .recovery import Recovery
 
 
 def _hm(seconds: int | None) -> str:
@@ -59,6 +60,25 @@ def day_line(day: Day) -> str:
     if day.bb_low is not None and day.bb_high is not None:
         parts.append(f"Body Battery {day.bb_low}-{day.bb_high}")
     return f"👟 {_day(day.date)}: " + (" · ".join(parts) or "no activity data")
+
+
+_LIGHT = {
+    "green": "🟢 **Recovery: all clear**",
+    "yellow": "🟠 **Recovery: worth watching**",
+    "red": "🔴 **Recovery: take it easy today**",
+}
+
+
+def recovery_line(r: Recovery) -> str | None:
+    """'🟢 Recovery: all clear (HRV 42 ms, normal 41 · resting HR 55, normal 56)'."""
+    if r.level not in _LIGHT:
+        return None
+    bits = []
+    if r.hrv is not None and r.hrv_normal is not None:
+        bits.append(f"HRV {r.hrv:.0f} ms, normal {r.hrv_normal:.0f}")
+    if r.rhr is not None and r.rhr_normal is not None:
+        bits.append(f"resting HR {r.rhr:.0f}, normal {r.rhr_normal:.0f}")
+    return _LIGHT[r.level] + (f" ({' · '.join(bits)})" if bits else "")
 
 
 def post_discord(webhook_url: str, content: str) -> None:

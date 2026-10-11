@@ -37,6 +37,7 @@ def test_message_skips_missing_vitals():
 @pytest.fixture
 def run_env(fake_garmin, token_path, monkeypatch):
     monkeypatch.setattr(push, "push", lambda *a, **k: {"ok": True})
+    monkeypatch.setattr(push, "get_vitals", lambda *a, **k: [])
     monkeypatch.setenv("INGEST_URL", "https://worker.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     monkeypatch.setattr(garmin, "REQUEST_GAP_S", 0)
@@ -70,3 +71,28 @@ def test_discord_failure_does_not_fail_the_run(run_env, monkeypatch, capsys):
     err = capsys.readouterr().err
     assert "Discord message not sent: RuntimeError" in err
     assert "secret-hook" not in err
+
+
+def test_run_adds_the_recovery_light(run_env, monkeypatch):
+    # 30 steady nights up to and including the fixture's night (30 Sep).
+    steady = {"hrv_avg": NIGHT.hrv_avg, "resting_hr": NIGHT.resting_hr}
+    history = [{"date": f"2026-09-{i:02d}", **steady} for i in range(1, 31)]
+    monkeypatch.setattr(push, "get_vitals", lambda *a, **k: history)
+    posts = []
+    monkeypatch.setattr(notify, "post_discord", lambda url, content: posts.append(content))
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.test/hook")
+    assert cli.main(run_env) == 0
+    assert "🟢 **Recovery: all clear**" in posts[0]
+
+
+def test_recovery_failure_does_not_block_the_message(run_env, monkeypatch, capsys):
+    def boom(*a, **k):
+        raise ConnectionError("worker down")
+
+    monkeypatch.setattr(push, "get_vitals", boom)
+    posts = []
+    monkeypatch.setattr(notify, "post_discord", lambda url, content: posts.append(content))
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.test/hook")
+    assert cli.main(run_env) == 0
+    assert "Last night" in posts[0] and "Recovery" not in posts[0]
+    assert "recovery light skipped: ConnectionError" in capsys.readouterr().err
