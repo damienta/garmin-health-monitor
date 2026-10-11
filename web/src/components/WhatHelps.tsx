@@ -2,7 +2,7 @@ import { type Comparison, MIN_GROUP } from "../insights";
 
 /**
  * Your sleep score after different kinds of day, side by side. Two quiet bars per factor
- * (ink for the first group, grey for the second) and a plain sentence with the gap.
+ * (the score colour for the first group, grey for the second) and a plain sentence with the gap.
  */
 export function WhatHelps({ items }: { items: Comparison[] }) {
   if (!items.length) {
@@ -40,7 +40,7 @@ function Bar({ label, score, nights, ink = false }: { label: string; score: numb
     <div className="helps-bar" title={`${nights} nights`}>
       <span className="helps-label">{label}</span>
       <span className="helps-track">
-        <span style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: ink ? "var(--ink)" : "var(--bar)" }} />
+        <span style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: ink ? "var(--c-score)" : "var(--bar)" }} />
       </span>
       <span className="helps-value">{Math.round(score)}</span>
     </div>

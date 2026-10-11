@@ -1,4 +1,4 @@
-import type { ActivityRow, DayRow, TrendRow } from "./api";
+import type { DayRow, TrendRow } from "./api";
 import { previousDate } from "./day";
 
 /**
@@ -12,13 +12,6 @@ const median = (xs: number[]) => {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
-
-/** Daily training load: the sum over that day's workouts. */
-export function loadByDay(activities: ActivityRow[]): Map<string, number> {
-  const out = new Map<string, number>();
-  for (const a of activities) out.set(a.date, (out.get(a.date) ?? 0) + (a.training_load ?? 0));
-  return out;
-}
 
 // ---------- what helps your sleep ----------
 
@@ -36,18 +29,11 @@ export interface Comparison {
 interface Pair {
   night: TrendRow;
   day: DayRow | null;
-  load: number;
 }
 
-function pairs(nights: TrendRow[], days: DayRow[], activities: ActivityRow[]): Pair[] {
+function pairs(nights: TrendRow[], days: DayRow[]): Pair[] {
   const byDate = new Map(days.map((d) => [d.date, d]));
-  const load = loadByDay(activities);
-  return nights
-    .filter((n) => n.score != null)
-    .map((n) => {
-      const prev = previousDate(n.date);
-      return { night: n, day: byDate.get(prev) ?? null, load: load.get(prev) ?? 0 };
-    });
+  return nights.filter((n) => n.score != null).map((n) => ({ night: n, day: byDate.get(previousDate(n.date)) ?? null }));
 }
 
 function compare(
@@ -80,8 +66,8 @@ const roundTo = (x: number, step: number) => Math.round(x / step) * step;
  * Sleep score after different kinds of day. Splits use your own median, so "high steps"
  * means high for you. Sorted by how big the difference is.
  */
-export function whatHelps(nights: TrendRow[], days: DayRow[], activities: ActivityRow[]): Comparison[] {
-  const ps = pairs(nights, days, activities);
+export function whatHelps(nights: TrendRow[], days: DayRow[]): Comparison[] {
+  const ps = pairs(nights, days);
   const out: (Comparison | null)[] = [];
 
   const steps = ps.map((p) => p.day?.steps).filter((v): v is number => v != null);
@@ -94,9 +80,6 @@ export function whatHelps(nights: TrendRow[], days: DayRow[], activities: Activi
       ]),
     );
   }
-
-  // Only meaningful if workouts are being synced at all.
-  if (activities.length) out.push(compare("Exercise", ps, (p) => p.load > 0, ["workout days", "rest days"]));
 
   const stress = ps.map((p) => p.day?.stress_avg).filter((v): v is number => v != null);
   if (stress.length) {
@@ -156,29 +139,36 @@ export function sleepDebt(rows: TrendRow[]): { usual_h: number | null; rows: Deb
   };
 }
 
-// ---------- training load vs HRV ----------
+// ---------- best night of the week ----------
 
-export interface LoadPoint {
-  date: string;
-  load: number;
-  hrv: number;
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+export interface WeekdayRow {
+  /** "Friday" means Friday night, the night you woke from on Saturday. */
+  day: string;
+  short: string;
+  score: number | null;
+  duration_h: number | null;
+  nights: number;
 }
 
-/** Each night's HRV against the training load of the day before (0 on rest days). */
-export function loadVsHrv(nights: TrendRow[], activities: ActivityRow[]) {
-  const load = loadByDay(activities);
-  const points: LoadPoint[] = nights
-    .filter((n) => n.hrv_avg != null)
-    .map((n) => ({ date: n.date, load: load.get(previousDate(n.date)) ?? 0, hrv: n.hrv_avg! }));
-  const hard = points.filter((p) => p.load > 0).map((p) => p.load);
-  const cut = hard.length ? median(hard) : null;
-  const hardHrv = cut == null ? [] : points.filter((p) => p.load >= cut).map((p) => p.hrv);
-  const restHrv = points.filter((p) => p.load === 0).map((p) => p.hrv);
-  return {
-    points,
-    /** Median load of training days: at or above it counts as a hard day. */
-    hardCut: cut,
-    afterHard: hardHrv.length >= MIN_GROUP ? avg(hardHrv) : null,
-    afterRest: restHrv.length >= MIN_GROUP ? avg(restHrv) : null,
-  };
+/**
+ * Average sleep score and time asleep for each night of the week. Named by the evening
+ * you went to bed, since that's when the choices happen (a Friday night out, a Sunday
+ * before work).
+ */
+export function byWeekday(nights: TrendRow[]): WeekdayRow[] {
+  const groups = WEEKDAYS.map(() => ({ scores: [] as number[], hours: [] as number[] }));
+  for (const n of nights) {
+    const bedDay = (new Date(`${previousDate(n.date)}T00:00:00Z`).getUTCDay() + 6) % 7; // Monday = 0
+    if (n.score != null) groups[bedDay].scores.push(n.score);
+    if (n.duration_h != null) groups[bedDay].hours.push(n.duration_h);
+  }
+  return groups.map((g, i) => ({
+    day: WEEKDAYS[i],
+    short: WEEKDAYS[i].slice(0, 3),
+    score: avg(g.scores),
+    duration_h: avg(g.hours),
+    nights: g.scores.length,
+  }));
 }

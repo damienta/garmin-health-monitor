@@ -20,6 +20,17 @@
   --bad: #d03b3b;
   --warn: #a86b00; /* recovery check only: green / amber / red, always with words */
 
+  /* One colour per measure on the Trends charts. Cards that sit side by side use pairs
+     that pass the colour-blind check (scripts: dataviz validate_palette). */
+  --c-score: #2a78d6;
+  --c-window: #6250d6;
+  --c-sleep: #1baf7a;
+  --c-hrv: #eda100;
+  --c-rhr: #e87ba4;
+  --c-steps: #e34948;
+  --c-bb: #008300;
+  --c-stress: #eb6834;
+
   --deep: #2a78d6;
   --light: #1baf7a;
   --rem: #4a3aa7;
@@ -47,6 +58,15 @@
     --good: #0ca30c;
     --bad: #e66767;
     --warn: #e0a82e;
+
+    --c-score: #3987e5;
+    --c-window: #9085e9;
+    --c-sleep: #199e70;
+    --c-hrv: #c98500;
+    --c-rhr: #d55181;
+    --c-steps: #e66767;
+    --c-bb: #008300;
+    --c-stress: #d95926;
 
     --deep: #3987e5;
     --light: #199e70;
