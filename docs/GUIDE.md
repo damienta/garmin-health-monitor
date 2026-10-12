@@ -57,7 +57,7 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 
 ### Grafana and Discord
 
-- **Grafana Cloud** reads the same API through the Infinity plugin: a Sleep dashboard, a System health dashboard (`GET /api/runs`) and a "no data" alert. See `docs/GRAFANA.md`.
+- **Grafana Cloud** reads the same API through the Infinity plugin: a Sleep dashboard, a System health dashboard (`GET /api/runs`) and a "no data" alert.
 - **Discord** gets the morning summary with the recovery light (🟢 / 🟠 / 🔴, same rules as the website), plus a ❌ ping if the daily run fails. The collector reads your recent HRV and resting HR from `GET /api/ingest/vitals` to work out your normal.
 
 ## The website

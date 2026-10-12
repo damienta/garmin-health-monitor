@@ -2,7 +2,7 @@
 
 **A personal sleep and recovery dashboard for my Garmin watch. It updates itself every morning and runs entirely on free plans.**
 
-**Docs:** [**How it works**](docs/GUIDE.md) · [**Setup**](docs/SETUP.md) · [**Garmin sign-in**](docs/GARMIN_SETUP.md) · [**Grafana**](docs/GRAFANA.md) · [**How it was built**](docs/ROADMAP.md)
+**Docs:** [**How it works**](docs/GUIDE.md) · [**Setup**](docs/SETUP.md) · [**Garmin sign-in**](docs/GARMIN_SETUP.md) · [**How it was built**](docs/ROADMAP.md)
 
 ![Daily page: last night's sleep score, time asleep, HRV, resting heart rate and sleep stages](docs/images/daily-sleep.png)
 
@@ -24,10 +24,10 @@
 ## Quick tour
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="A tour of the dashboard: last night's sleep, day stats, records, 30-day and 90-day trends" width="720">
+  <img src="docs/images/health-gif.gif" alt="A click-through of the Daily and Trends pages" width="720">
 </p>
 
-Last night's sleep, the day's stats, personal records, then 30-day and 90-day trends. If it doesn't play by itself, click it: GitHub pauses animations when your device is set to reduce motion.
+A click-through of the Daily and Trends pages with real data. If it doesn't play by itself, click it: GitHub pauses animations when your device is set to reduce motion.
 
 ## Screenshots
 
@@ -126,7 +126,7 @@ You'll need a Garmin watch and free Cloudflare, GitHub and (optionally) Discord 
 | [**Setup**](docs/SETUP.md) | Step-by-step: Cloudflare, healthchecks.io, GitHub secrets, the first run and the 09:23 timer |
 | [**Garmin sign-in**](docs/GARMIN_SETUP.md) | The one-time Garmin sign-in on your laptop, and how the saved tokens keep working |
 | [**How it was built**](docs/ROADMAP.md) | The build history, one small slice at a time |
-| [**Grafana**](docs/GRAFANA.md) | Two importable dashboards (Sleep, System health), what each panel means, and the Discord alert |
+| [**Grafana dashboards**](grafana/) | Two importable dashboards: Sleep, and System health (is the daily run working?) |
 
 ## License
 
