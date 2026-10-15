@@ -20,3 +20,4 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+# Test PR: checks the merge rule (CI must pass before merging).
