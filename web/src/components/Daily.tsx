@@ -8,7 +8,6 @@ import { checkRecovery, type Recovery } from "../recovery";
 import { baseline, clock, hm } from "../sleep";
 import { headline, writeSummary } from "../summary";
 import { useLoad } from "../useApi";
-import { weekCompare } from "../week";
 import { Card } from "./Card";
 import { CountUp } from "./CountUp";
 import { Delta } from "./Delta";
@@ -50,7 +49,6 @@ export function Daily({ day }: { day: string }) {
       )}
       {night && <InShort night={night} rows={rows} day={dayRow} recovery={checkRecovery(rows, night.date)} />}
       <DayStats day={dayRow} days={days} />
-      {night && <WeekCard rows={rows} date={night.date} />}
       {night && (
         <Card title="Sleep stages" delay={240}>
           <Hypnogram night={night} />
@@ -175,29 +173,6 @@ function DayStats({ day, days }: { day: DayRow | null; days: DayRow[] }) {
         <Tile label="Distance" value={day.distance_m != null ? `${(day.distance_m / 1000).toFixed(1)} km` : "–"} />
         <Tile label="Resting HR (day)" value={day.resting_hr != null ? `${day.resting_hr} bpm` : "–"}>
           <Delta diff={diff(day.resting_hr, usual.resting_hr)} format={(x) => `${n(x)} bpm`} better="down" />
-        </Tile>
-      </div>
-    </Card>
-  );
-}
-
-/** The last 7 nights against the 7 before, so one night doesn't tell the whole story. */
-function WeekCard({ rows, date }: { rows: TrendRow[]; date: string }) {
-  const { thisWeek: t, lastWeek: l } = weekCompare(rows, date);
-  return (
-    <Card title="This week" delay={210} aside={<span className="sub">7 nights vs the 7 before</span>}>
-      <div className="tiles">
-        <Tile label="Sleep score" value={t.score != null ? `${Math.round(t.score)}` : "–"}>
-          <Delta diff={diff(t.score, l.score)} format={(x) => `${Math.round(x)}`} label="vs last week" />
-        </Tile>
-        <Tile label="Time asleep" value={t.duration_h != null ? hm(t.duration_h * 3600) : "–"}>
-          <Delta diff={diff(t.duration_h, l.duration_h)} format={(h) => hm(h * 3600)} label="vs last week" />
-        </Tile>
-        <Tile label="HRV" value={t.hrv != null ? `${Math.round(t.hrv)} ms` : "–"}>
-          <Delta diff={diff(t.hrv, l.hrv)} format={(x) => `${Math.round(x)} ms`} label="vs last week" />
-        </Tile>
-        <Tile label="Resting HR" value={t.resting_hr != null ? `${Math.round(t.resting_hr)} bpm` : "–"}>
-          <Delta diff={diff(t.resting_hr, l.resting_hr)} format={(x) => `${Math.round(x)} bpm`} better="down" label="vs last week" />
         </Tile>
       </div>
     </Card>

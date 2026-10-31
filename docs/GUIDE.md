@@ -62,7 +62,7 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 
 ## The website
 
-Two pages: **Daily** (`/`) and **Trends** (`/trends`).
+Three pages: **Daily** (`/`), **Weekly** (`/weekly`) and **Trends** (`/trends`).
 
 ### Daily
 
@@ -92,11 +92,18 @@ The date at the top is one day. The page shows **that day's stats and the sleep 
 - Steps (with your goal), Body Battery low to high (plus charged and drained), stress (average and peak), active calories, distance, daytime resting HR.
 - Each is compared with the 7 days before.
 
-**This week**
-- Average score, time asleep, HRV and resting HR over the last 7 nights, against the 7 nights before. One bad night doesn't tell the whole story; this does.
-
 **Sleep stages**
 - The night as a timeline: when you were in deep, light, REM or awake. Hover for exact times.
+
+### Weekly
+
+One Monday-to-Sunday week (a night counts in the week of the morning you woke). Use ‹ › to move between weeks; each has its own link (`/weekly?week=2026-10-19`). Early in a week it starts on the week before, until there are a few nights to show.
+
+- **Week of …:** a one-line verdict, then your averages for the week (score, time asleep, sleep debt, bedtime and how much it varied, HRV, resting HR, steps, stress). Each shows ▲/▼ against last week and your 4-week average underneath.
+- **Night by night:** hours asleep each night with the score on top, the best and worst nights, and the recovery light for each day.
+- **Wins** and **Watch-outs:** up to three each, from simple rules (score or sleep up, HRV above your 4-week average, a steady bedtime; late nights, sleep debt, an uneven bedtime, recovery off).
+- **Weekdays vs weekend:** bedtime, sleep and score on Sun–Thu nights against Fri–Sat, and how much later you go to bed at the weekend ("social jet lag").
+- **Next week's focus:** up to three concrete suggestions, like a bedtime to aim for, paying back sleep debt, or walking more. General tips, not medical advice.
 
 ### Trends
 
