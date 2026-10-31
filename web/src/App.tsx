@@ -13,6 +13,7 @@ import { StepsChart } from "./charts/StepsChart";
 import { VitalChart } from "./charts/VitalChart";
 import { Card } from "./components/Card";
 import { Daily } from "./components/Daily";
+import { Weekly } from "./components/Weekly";
 import { Nav } from "./components/Nav";
 import { RangePicker, rangeText, type Range } from "./components/RangePicker";
 import { RecordsCard } from "./components/RecordsCard";
@@ -20,17 +21,17 @@ import { WhatHelps } from "./components/WhatHelps";
 import { whatHelps } from "./insights";
 import { useLoad, type Loaded } from "./useApi";
 import { useRoute } from "./useRoute";
-import { addDays, padDates, WEEKLY_FROM } from "./series";
-import { dayParam } from "./routes";
+import { addDays, padDates, WEEKLY_FROM, weekStart } from "./series";
+import { dayParam, weekParam } from "./routes";
 import { nextDate, previousDate } from "./day";
-import { longDate } from "./format";
+import { longDate, shortDate } from "./format";
 
 export function App() {
   const page = useRoute();
   return (
     <main>
       <Nav page={page} />
-      {page === "daily" ? <DailyPage /> : <AllTime />}
+      {page === "daily" ? <DailyPage /> : page === "weekly" ? <WeeklyPage /> : <AllTime />}
     </main>
   );
 }
@@ -80,6 +81,59 @@ function DailyPage() {
         )}
       </div>
       <Daily key={shown} day={shown} />
+    </>
+  );
+}
+
+/**
+ * The Weekly page: one Monday-to-Sunday week. Defaults to the week of your latest night,
+ * or the week before if this one has fewer than 3 nights so far. ?week= picks another.
+ */
+function WeeklyPage() {
+  const health = useLoad(getHealth, "health");
+  const [week, setWeek] = useState<string | null>(() => weekParam(window.location.search));
+  useEffect(() => {
+    const onPop = () => setWeek(weekParam(window.location.search));
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("navigate-page", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("navigate-page", onPop);
+    };
+  }, []);
+  if (health.kind === "loading") return <div className="skeleton" style={{ height: 320 }} />;
+  if (health.kind === "error") return <p className="error">Couldn't reach the API: {health.message}</p>;
+  const latestNight = health.data.latest_night;
+  if (!latestNight) return <p className="muted">No nights yet. They appear after the first daily run.</p>;
+  const thisWeek = weekStart(latestNight);
+  // Early in the week there's little to show, so start on last week until Wednesday's night.
+  const defaultWeek = latestNight < addDays(thisWeek, 2) ? addDays(thisWeek, -7) : thisWeek;
+  const shown = week ? weekStart(week) > thisWeek ? thisWeek : weekStart(week) : defaultWeek;
+  const pick = (m: string) => {
+    window.history.pushState(null, "", m === defaultWeek ? "/weekly" : `/weekly?week=${m}`);
+    setWeek(m === defaultWeek ? null : m);
+  };
+  return (
+    <>
+      <div className="section-head">
+        <div className="segmented daypick" role="group" aria-label="Week">
+          <button type="button" onClick={() => pick(addDays(shown, -7))} aria-label="Previous week">
+            ‹
+          </button>
+          <span className="daypick-date">
+            {shortDate(shown)} – {shortDate(addDays(shown, 6))}
+          </span>
+          <button type="button" onClick={() => pick(addDays(shown, 7))} disabled={shown >= thisWeek} aria-label="Next week">
+            ›
+          </button>
+        </div>
+        {shown !== defaultWeek && (
+          <button type="button" className="linkish" onClick={() => pick(defaultWeek)}>
+            Latest
+          </button>
+        )}
+      </div>
+      <Weekly key={shown} monday={shown} latest={latestNight} />
     </>
   );
 }

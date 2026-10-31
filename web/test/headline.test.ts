@@ -1,37 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Night, TrendRow } from "../src/api";
+import type { Night } from "../src/api";
 import { bedtimeMin, type Baseline } from "../src/sleep";
 import { headline } from "../src/summary";
-import { weekCompare } from "../src/week";
-
-const row = (date: string, score: number): TrendRow => ({
-  date,
-  time: 0,
-  score,
-  score_7d: null,
-  duration_h: 7,
-  duration_h_7d: null,
-  hrv_avg: 50,
-  hrv_7d: null,
-  resting_hr: 50,
-  bedtime_min: 0,
-});
-
-describe("weekCompare", () => {
-  it("splits by calendar week ending on the date", () => {
-    // 1..14 Oct: first week scores 70, second week 80. 15 Oct is outside.
-    const rows = Array.from({ length: 15 }, (_, i) => row(`2026-10-${String(i + 1).padStart(2, "0")}`, i < 7 ? 70 : i < 14 ? 80 : 99));
-    const { thisWeek, lastWeek } = weekCompare(rows, "2026-10-14");
-    expect(thisWeek).toMatchObject({ nights: 7, score: 80 });
-    expect(lastWeek).toMatchObject({ nights: 7, score: 70 });
-  });
-
-  it("counts only the nights that exist", () => {
-    const { thisWeek, lastWeek } = weekCompare([row("2026-10-10", 80), row("2026-10-02", 60)], "2026-10-10");
-    expect(thisWeek.nights).toBe(1);
-    expect(lastWeek).toMatchObject({ nights: 1, score: 60 });
-  });
-});
 
 // 23:29 -> 07:46 local (+60).
 const night = (o: Partial<Night> = {}): Night => ({

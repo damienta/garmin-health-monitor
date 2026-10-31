@@ -11,6 +11,7 @@
 - **A morning sleep report.** Score, time asleep, sleep stages, HRV and resting heart rate, each compared with your usual. Every night's report has its own page.
 - **An early warning.** A green, amber or red recovery light compares HRV and resting heart rate with your own 30-night normal. That pattern often shifts a day or two before you feel ill or run down.
 - **Plain-English summaries.** "A good night. You slept 7h 53m, 1h more than usual…", written from the numbers by simple rules. No AI, no cost.
+- **A weekly review.** Your averages for the week against last week and your 4-week average, night by night, wins, watch-outs, weekdays vs weekend, and a focus for next week.
 - **Trends and insights.** Sleep window, sleep debt, records and streaks. It also shows which of your habits go with better nights (bedtime, steps, stress) and your best night of the week.
 - **A Discord message every morning**, with no manual steps. Your watch syncs, and the rest happens on its own.
 
@@ -34,7 +35,7 @@ A click-through of the Daily and Trends pages with real data. If it doesn't play
 | | |
 | --- | --- |
 | ![Day stats and this week compared with last week](docs/images/daily-stats.png) | ![Records: best and worst night, longest sleep, streaks, most steps](docs/images/trends-records.png) |
-| **Daily:** the day's steps, Body Battery and stress, and this week vs last | **Trends:** personal records across every night |
+| **Daily:** the day's steps, Body Battery and stress | **Trends:** personal records across every night |
 | ![Sleep window and sleep score over 30 days](docs/images/trends-30-days.png) | ![90 days shown as weekly averages](docs/images/trends-90-days.png) |
 | **30 days:** when you fell asleep and woke, and your score with a 7-night average | **90 days:** long ranges switch to weekly averages |
 
