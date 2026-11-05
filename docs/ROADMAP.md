@@ -15,9 +15,12 @@ Built one slice at a time. Each day ends with something that works on its own. T
 | 9 | On-time daily run (Cloudflare cron), clean URLs, recovery check, insights on Trends | **Done** |
 | 10 | Daily page: one date for a day and the sleep after it, This week card | **Done** |
 | 11 | Trends cleanup: same dates on every chart, weekly averages from 90 days, a colour per chart, best night of the week, docs/GUIDE.md | **Done** |
-| 12 | Find why workouts arrive as 0 (log a warning instead of failing quietly) | Planned |
-| 13 | Remove the GitHub backup schedule once the Cloudflare timer has run on its own for a week | Planned |
-| 14 | README with real screenshots and a GIF, visual first | Planned |
+| 12 | Find why workouts arrive as 0 | **Done** (no saved activities in Garmin; workouts views removed) |
+| 13 | Remove the GitHub backup schedule once the Cloudflare timer has run on its own for a week | Optional |
+| 14 | README with real screenshots and a GIF, visual first; MIT licence | **Done** |
+| 15 | Recovery light in Discord, clearer "What helps", smoke tests after deploy, Grafana System health dashboard, Dependabot for the website | **Done** |
+| 16 | Weekly page: averages vs last week and 4 weeks, night by night, wins, watch-outs, weekdays vs weekend, next week's focus | **Done** |
+| 17 | Personal targets, retry until the night arrives, monthly view | Ideas |
 
 ## Day 1: Garmin connection
 
@@ -110,8 +113,27 @@ Built one slice at a time. Each day ends with something that works on its own. T
 
 ## Day 12: Missing workouts
 
-- The collector warns in the run log when the workout fetch fails, instead of reporting 0
-- Check with a local `fetch` whether it's Garmin or the code
+- Checked the run logs: the workout fetch works (a 45-day backfill found 4), but Garmin only has workouts you start and save on the watch
+- Gym sessions weren't being recorded as activities, so the Workouts card and training load chart were removed
+
+## Day 14: README
+
+- Visual-first README with real screenshots, a screen recording, how it works, tech stack, best practices and a short "run your own"
+- MIT licence
+
+## Day 15: Polish and reliability
+
+- Discord morning message shows the recovery light (`GET /api/ingest/vitals`, `collector/recovery.py` mirrors the website's rules)
+- "What helps your sleep" reads as plain sentences; gaps under 3 points count as noise
+- After every deploy, a smoke test checks the live API still needs a token and the website is still behind Cloudflare Access
+- Grafana System health dashboard (`GET /api/runs`): hours since last data, uploads per day, recent uploads
+- Dependabot also covers `web/`; a ruleset protects `main`
+
+## Day 16: Weekly page
+
+- `/weekly` with a week picker; averages vs last week and the 4 weeks before, sleep debt, bedtime spread
+- Night by night with the recovery light, weekdays vs weekend, wins, watch-outs and next week's focus (rules in `web/src/weekly.ts`)
+- The This week card moved off the Daily page
 
 ## Agent prompt for each day
 
