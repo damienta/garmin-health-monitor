@@ -17,6 +17,9 @@ def sent(monkeypatch):
         return {"ok": True}
 
     monkeypatch.setattr(push, "push", fake_push)
+    monkeypatch.setattr(
+        push, "write_note", lambda url, token, date: bodies.append({"_path": f"/api/notes/{date}"})
+    )
     monkeypatch.setenv("INGEST_URL", "https://worker.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     monkeypatch.setattr(garmin, "REQUEST_GAP_S", 0)
@@ -30,7 +33,7 @@ def test_run_refreshes_fetches_and_pushes(fake_garmin, token_path, sent):
     assert fake_garmin.refresh_calls == 1
     assert read_tokens(token_path)["di_refresh_token"] == "refresh-1"
     # The fake returns the same night for every date; the Worker upserts by date.
-    nights, days, activities = sent
+    nights, days, activities, note = sent
     assert nights["_path"] == "/api/ingest"
     assert nights["source"] == "t" and len(nights["nights"]) == 3
     assert nights["raw"][0]["kind"] == "sleep"
@@ -38,6 +41,8 @@ def test_run_refreshes_fetches_and_pushes(fake_garmin, token_path, sent):
     assert days["_path"] == activities["_path"] == "/api/ingest/daily"
     assert len(days["days"]) == 3 and days["raw"][0]["kind"] == "stats"
     assert [a["type"] for a in activities["activities"]] == ["running", "walking"]
+    # Last, the Worker writes the AI morning note for the newest night.
+    assert note["_path"] == f"/api/notes/{nights['nights'][-1]['date']}"
 
 
 def test_run_keeps_sleep_when_daily_stats_are_missing(fake_garmin, token_path, sent):
@@ -46,7 +51,8 @@ def test_run_keeps_sleep_when_daily_stats_are_missing(fake_garmin, token_path, s
     fake_garmin.activities_payload = []
     write_tokens(token_path, access_token(3600))
     assert cli.main(["--tokenstore", str(token_path), "run", "--days", "2"]) == 0
-    assert [b["_path"] for b in sent] == ["/api/ingest"]
+    assert [b["_path"] for b in sent][:1] == ["/api/ingest"]
+    assert not any(b["_path"] == "/api/ingest/daily" for b in sent)
 
 
 def test_run_saves_rotated_token_even_if_push_fails(fake_garmin, token_path, sent, monkeypatch):
@@ -72,3 +78,15 @@ def test_push_dir_reads_saved_files(tmp_path, sent):
     (tmp_path / "notes.txt").write_text("ignored")
     assert cli.main(["push-dir", str(tmp_path)]) == 0
     assert [n["date"] for n in sent[0]["nights"]] == ["2026-09-30"]
+
+
+def test_run_passes_when_the_morning_note_fails(fake_garmin, token_path, sent, monkeypatch, capsys):
+    """Workers AI is an optional extra: a failure there must never fail the daily run."""
+
+    def boom(*a):
+        raise RuntimeError("AI over its free allowance")
+
+    monkeypatch.setattr(push, "write_note", boom)
+    write_tokens(token_path, access_token(3600))
+    assert cli.main(["--tokenstore", str(token_path), "run", "--days", "2"]) == 0
+    assert "morning note skipped: RuntimeError" in capsys.readouterr().err

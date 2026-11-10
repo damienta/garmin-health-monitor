@@ -8,6 +8,9 @@ export default defineConfig(async () => {
     plugins: [
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc" },
+        // Never reach the real Workers AI from tests (it needs a Cloudflare login).
+        // Tests replace env.AI.run with a fake.
+        remoteBindings: false,
         miniflare: {
           bindings: { TEST_MIGRATIONS: migrations, INGEST_TOKEN: "test-ingest", READ_TOKEN: "test-read" },
         },

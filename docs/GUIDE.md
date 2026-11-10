@@ -47,6 +47,11 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 - `POST /api/ingest` and `/api/ingest/daily` are how the collector saves nights and days. They need `INGEST_TOKEN`.
 - `GET /api/...` endpoints return nights, stages, trends (with 7-night averages), days and health. They need `READ_TOKEN`.
 - Saving the same night twice just overwrites it, so re-runs are safe.
+- `POST /api/notes/:date` writes the **AI morning note**. The daily run calls it once, for the newest night:
+  - The Worker reads last night, your usual, the recovery light, yesterday's stats and the week's sleep debt from D1.
+  - It sends that summary to **Workers AI** (Llama 3.3, on Cloudflare's free daily allowance) with the instructions in `worker/src/skills/daily-note.md`.
+  - The reply (a headline, 2 or 3 things to do today, and why) is checked and saved in `daily_notes`. `GET /api/notes/:date` reads it back.
+  - If the AI call fails, the run still passes.
 
 ### The website (`web/`)
 
@@ -156,5 +161,6 @@ Below the picker:
 | Change a chart | `web/src/charts/` |
 | Change the written summary or recovery light | `web/src/summary.ts`, `web/src/recovery.ts` |
 | Change the insights | `web/src/insights.ts` |
+| Change what the AI morning note says | `worker/src/skills/daily-note.md` (the instructions), `worker/src/notes.ts` (the data it gets) |
 | Change colours | `web/src/styles.css` (tokens at the top) |
 | Set up from scratch | `docs/SETUP.md`, `docs/GARMIN_SETUP.md` |

@@ -15,6 +15,10 @@
   ],
   // Cron Trigger: 09:23 UTC every day, on time (GitHub's own cron runs hours late).
   // The scheduled() handler in src/index.ts asks GitHub to start collect.yml.
+  // Workers AI (free daily allowance) writes the morning note: POST /api/notes/:date.
+  "ai": { "binding": "AI", "remote": true },
+  // Bundle the AI instructions (src/skills/*.md) as text.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "triggers": { "crons": ["23 9 * * *"] },
   "vars": { "GITHUB_REPO": "damienta/garmin-health-monitor" }
   // Secrets (set with `npx wrangler secret put <NAME>`, or .dev.vars locally):

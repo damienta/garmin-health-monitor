@@ -87,7 +87,7 @@ jobs:
           npm ci
           cp .dev.vars.example .dev.vars
           npm run db:migrate:local
-          nohup npx wrangler dev --port 8787 > wrangler.log 2>&1 &
+          nohup npx wrangler dev --local --port 8787 > wrangler.log 2>&1 &
           for i in $(seq 1 60); do
             curl -sf -o /dev/null -H "Authorization: Bearer dev-read-token" localhost:8787/api/health && exit 0
             sleep 1

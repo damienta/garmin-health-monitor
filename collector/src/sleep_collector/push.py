@@ -87,3 +87,17 @@ def get_vitals(url: str, token: str, days: int = 45) -> list[dict]:
     )
     r.raise_for_status()
     return r.json()
+
+
+def write_note(url: str, token: str, date: str) -> dict:
+    """Ask the Worker to write the AI morning note for the night that ended on ``date``.
+
+    The Worker reads the data it already has, asks Workers AI and saves the note.
+    """
+    r = requests.post(
+        url.rstrip("/") + f"/api/notes/{date}",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=60,
+    )
+    r.raise_for_status()
+    return r.json()

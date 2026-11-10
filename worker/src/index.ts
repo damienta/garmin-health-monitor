@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { ZodError } from "zod";
 import { bearer } from "./auth";
 import { dispatchCollect } from "./dispatch";
-import { type Activity, DailyIngestBody, type Day, IngestBody, RangeQuery, type Night } from "./schema";
+import { buildFacts, NOTE_MODEL, writeNote } from "./notes";
+import { type Activity, DailyIngestBody, DateParam, type Day, IngestBody, RangeQuery, type Night } from "./schema";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -129,6 +130,29 @@ app.post("/api/ingest/daily", bearer("INGEST_TOKEN"), async (c) => {
   return c.json({ ok: true, days: days.length, activities: activities.length, raw: raw.length });
 });
 
+// The AI morning note for the night that ended on :date. The collector calls this once
+// after each daily run. Re-running it rewrites the note. Workers AI free plan, no extra key.
+app.post("/api/notes/:date", bearer("INGEST_TOKEN"), async (c) => {
+  const date = DateParam.parse(c.req.param("date"));
+  const facts = await buildFacts(c.env.DB, date);
+  if (!facts) return c.json({ error: "no night for that date" }, 404);
+  let note;
+  try {
+    note = await writeNote(c.env.AI, facts);
+  } catch (e) {
+    console.error("note failed", e);
+    return c.json({ error: "note failed" }, 502);
+  }
+  const ts = now();
+  await c.env.DB.prepare(
+    `INSERT INTO daily_notes (date, headline, actions_json, why, model, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+     ON CONFLICT(date) DO UPDATE SET headline = excluded.headline, actions_json = excluded.actions_json,
+       why = excluded.why, model = excluded.model, created_at = excluded.created_at`,
+  ).bind(date, note.headline, JSON.stringify(note.do_today), note.why, NOTE_MODEL, ts).run();
+  return c.json({ date, ...note, model: NOTE_MODEL, created_at: ts * 1000 });
+});
+
 // ---------- read (Grafana) ----------
 // Every row carries `time` in epoch ms, which Grafana's Infinity datasource uses as the x axis.
 
@@ -162,6 +186,22 @@ app.get("/api/nights/:date", read, async (c) => {
   if (!row) return c.json({ error: "not found" }, 404);
   const { stages_json, ...night } = row;
   return c.json({ ...night, stages: JSON.parse(stages_json) });
+});
+
+app.get("/api/notes/:date", read, async (c) => {
+  const date = DateParam.parse(c.req.param("date"));
+  const row = await c.env.DB.prepare(`SELECT * FROM daily_notes WHERE date = ?1`)
+    .bind(date)
+    .first<{ headline: string; actions_json: string; why: string; model: string; created_at: number }>();
+  if (!row) return c.json({ error: "not found" }, 404);
+  return c.json({
+    date,
+    headline: row.headline,
+    do_today: JSON.parse(row.actions_json),
+    why: row.why,
+    model: row.model,
+    created_at: row.created_at * 1000,
+  });
 });
 
 app.get("/api/stages", read, async (c) => {
