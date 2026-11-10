@@ -138,12 +138,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         days_sent += len(body["days"])
         acts_sent += len(body["activities"])
     print(f"Pushed {days_sent} days and {acts_sent} activities")
-    _write_note(raw, url, token)
-    _notify(raw, stats, url=url, token=token)
+    note = _write_note(raw, url, token)
+    _notify(raw, stats, url=url, token=token, note=note)
     return 0
 
 
-def _write_note(raw: dict[str, dict], url: str, token: str) -> None:
+def _write_note(raw: dict[str, dict], url: str, token: str) -> dict | None:
     """Have the Worker write the AI morning note for the newest night.
 
     Optional extra: if Workers AI is down or over its free allowance, the run still passes
@@ -151,12 +151,14 @@ def _write_note(raw: dict[str, dict], url: str, token: str) -> None:
     """
     dates = [n.date for n in (parse_sleep(p) for p in raw.values()) if n is not None]
     if not dates:
-        return
+        return None
     try:
-        push.write_note(url, token, max(dates))
+        note = push.write_note(url, token, max(dates))
         print(f"Wrote the morning note for {max(dates)}")
+        return note
     except Exception as e:
         print(f"WARNING: morning note skipped: {type(e).__name__}", file=sys.stderr)
+        return None
 
 
 def _notify(
@@ -164,6 +166,7 @@ def _notify(
     stats: dict[str, dict] | None = None,
     url: str | None = None,
     token: str | None = None,
+    note: dict | None = None,
 ) -> None:
     """Post the newest night (and yesterday's activity) to Discord if DISCORD_WEBHOOK_URL is set.
 
@@ -183,6 +186,11 @@ def _notify(
                 message += "\n" + line
         except Exception as e:
             print(f"WARNING: recovery light skipped: {type(e).__name__}", file=sys.stderr)
+    # The AI note, only if it's about the night shown above.
+    if note and latest is not None and note.get("date") == latest.date:
+        line = notify.note_lines(note)
+        if line:
+            message += "\n" + line
     # Yesterday = the last full day before the newest date fetched.
     yesterday = sorted(d for d in (stats or {}) if d < max(raw))[-1:]
     if yesterday:

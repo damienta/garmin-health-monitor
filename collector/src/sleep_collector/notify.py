@@ -81,6 +81,17 @@ def recovery_line(r: Recovery) -> str | None:
     return _LIGHT[r.level] + (f" ({' · '.join(bits)})" if bits else "")
 
 
+def note_lines(note: dict) -> str | None:
+    """The AI morning note: the headline in bold, then each thing to do today as a bullet."""
+    headline = str(note.get("headline") or "").strip()
+    actions = [str(a).strip() for a in note.get("do_today") or [] if str(a).strip()]
+    if not headline and not actions:
+        return None
+    lines = [f"📝 **{headline}**"] if headline else []
+    lines += [f"• {a}" for a in actions]
+    return "\n".join(lines)
+
+
 def post_discord(webhook_url: str, content: str) -> None:
     r = requests.post(webhook_url, json={"content": content}, timeout=10)
     r.raise_for_status()
