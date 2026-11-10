@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { type DayRow, getDays, getNight, getTrends, type Night, type TrendRow } from "../api";
+import { type DailyNote, type DayRow, getDays, getNight, getNote, getTrends, type Night, type TrendRow } from "../api";
 import { Hypnogram } from "../charts/Hypnogram";
 import { StageBar } from "../charts/StageBar";
 import { dayBaseline, nextDate, pickDay } from "../day";
@@ -28,6 +28,8 @@ export function Daily({ day }: { day: string }) {
         getNight(wake).catch(() => null as Night | null),
         getTrends(60),
         getDays(21).catch(() => [] as DayRow[]),
+        // The AI note is an extra: without one (404, or AI down) the rule-based text shows.
+        getNote(wake).catch(() => null as DailyNote | null),
       ]),
     `daily-${day}`,
   );
@@ -35,7 +37,7 @@ export function Daily({ day }: { day: string }) {
   if (data.kind === "loading") return <div className="skeleton" style={{ height: 320 }} />;
   if (data.kind === "error") return <p className="error">Couldn't load this day: {data.message}</p>;
 
-  const [night, rows, days] = data.data;
+  const [night, rows, days, note] = data.data;
   const picked = pickDay(days, day);
   const dayRow = picked?.exact ? picked.day : null;
   return (
@@ -47,7 +49,7 @@ export function Daily({ day }: { day: string }) {
           <p className="muted">No sleep recorded for this night. The watch may not have been worn, or hasn't synced yet.</p>
         </Card>
       )}
-      {night && <InShort night={night} rows={rows} day={dayRow} recovery={checkRecovery(rows, night.date)} />}
+      {night && <InShort night={night} rows={rows} day={dayRow} note={note} recovery={checkRecovery(rows, night.date)} />}
       <DayStats day={dayRow} days={days} />
       {night && (
         <Card title="Sleep stages" delay={240}>
@@ -106,8 +108,23 @@ function SleepCard({ night, rows }: { night: Night; rows: TrendRow[] }) {
 
 const LIGHT = { green: "All clear", yellow: "Worth watching", red: "Take it easy", unknown: "Still learning your normal" };
 
-/** The recovery light first, then a one-line verdict and the plain-English summary. */
-function InShort({ night, rows, day, recovery: r }: { night: Night; rows: TrendRow[]; day: DayRow | null; recovery: Recovery }) {
+/**
+ * The recovery light first, then the AI morning note (what to do today). Without a note
+ * (not written yet, or the AI was down) it falls back to the rule-based verdict and summary.
+ */
+function InShort({
+  night,
+  rows,
+  day,
+  note,
+  recovery: r,
+}: {
+  night: Night;
+  rows: TrendRow[];
+  day: DayRow | null;
+  note: DailyNote | null;
+  recovery: Recovery;
+}) {
   const usual = baseline(rows, night.date);
   const vs = (v: number | null, normal: number | null, unit: string) =>
     v == null ? "–" : `${Math.round(v)} ${unit}${normal != null ? ` (normal ${Math.round(normal)})` : ""}`;
@@ -122,8 +139,24 @@ function InShort({ night, rows, day, recovery: r }: { night: Night; rows: TrendR
           </p>
         </div>
       </div>
-      <p className="headline">{headline(night, usual)}</p>
-      <p className="prose">{writeSummary(night, usual, day).join(" ")}</p>
+      {note ? (
+        <>
+          <p className="headline">{note.headline}</p>
+          <div className="stat-label">Today</div>
+          <ul className="tips">
+            {note.do_today.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+          <p className="prose">{note.why}</p>
+          <p className="muted small">Written by AI from your numbers. General advice, not medical advice.</p>
+        </>
+      ) : (
+        <>
+          <p className="headline">{headline(night, usual)}</p>
+          <p className="prose">{writeSummary(night, usual, day).join(" ")}</p>
+        </>
+      )}
     </Card>
   );
 }

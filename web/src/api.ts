@@ -116,3 +116,15 @@ export interface ActivityRow {
 }
 
 export const getActivities = (days: number) => get<ActivityRow[]>(`/api/activities?days=${days}`);
+
+/** GET /api/notes/:date: the AI morning note for the night that ended on that date. */
+export interface DailyNote {
+  date: string;
+  headline: string;
+  do_today: string[];
+  why: string;
+  model: string;
+  created_at: number;
+}
+
+export const getNote = (date: string) => get<DailyNote>(`/api/notes/${date}`);

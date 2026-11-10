@@ -10,7 +10,7 @@
 
 - **A morning sleep report.** Score, time asleep, sleep stages, HRV and resting heart rate, each compared with your usual. Every night's report has its own page.
 - **An early warning.** A green, amber or red recovery light compares HRV and resting heart rate with your own 30-night normal. That pattern often shifts a day or two before you feel ill or run down.
-- **Plain-English summaries.** "A good night. You slept 7h 53m, 1h more than usual…", written from the numbers by simple rules. No AI, no cost.
+- **A morning note on what to do today.** 2 or 3 concrete actions ("Be asleep by 23:25 tonight to pay back the week's debt"), written by Workers AI on Cloudflare's free plan from your numbers. If the AI is down, rule-based summaries take over.
 - **A weekly review.** Your averages for the week against last week and your 4-week average, night by night, wins, watch-outs, weekdays vs weekend, and a focus for next week.
 - **Trends and insights.** Sleep window, sleep debt, records and streaks. It also shows which of your habits go with better nights (bedtime, steps, stress) and your best night of the week.
 - **A Discord message every morning**, with no manual steps. Your watch syncs, and the rest happens on its own.
@@ -69,7 +69,7 @@ flowchart LR
 | Part | Built with |
 | --- | --- |
 | Collector | Python 3.11, [uv](https://docs.astral.sh/uv/), `garminconnect`, Pydantic, pytest, Ruff |
-| API | Cloudflare Workers, [Hono](https://hono.dev), Zod, D1 (SQLite), Vitest |
+| API | Cloudflare Workers, [Hono](https://hono.dev), Zod, D1 (SQLite), Workers AI (Llama 3.3), Vitest |
 | Website | React, TypeScript, Vite, [Recharts](https://recharts.org), react-spring, Cloudflare Access (JWT checked with `jose`) |
 | Automation | GitHub Actions (CI, daily collect, deploys), Cloudflare Cron Triggers, Dependabot |
 | Monitoring | Discord webhooks, healthchecks.io, Grafana Cloud |
@@ -105,7 +105,7 @@ flowchart LR
   - A warning two weeks before the Garmin sign-in would expire.
 
 **Design**
-- **Explainable insights.** Every summary sentence, warning and comparison is a short rule in TypeScript or Python, with tests. No AI, no running cost.
+- **Explainable insights.** Every summary sentence, warning and comparison is a short rule in TypeScript or Python, with tests. The only AI is the morning note: rules work out the facts (including the recovery light), and the model only words the advice, following a plain instructions file. No running cost.
 - **Accessible charts.** One colour per measure, with side-by-side pairs checked for colour-blind readers in light and dark mode. Every chart has a tooltip, and colour is never the only signal.
 - **Runs on free plans only.** It works within the limits of each, for example D1's 50-queries-per-request cap.
 

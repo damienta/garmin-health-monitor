@@ -58,12 +58,12 @@ Watch → Garmin Connect → collector (GitHub Actions) → API Worker + D1 (Clo
 - A React app, served by a second Worker (`garmin-health-monitor-web`).
 - Cloudflare Access sits in front of it, so only you can sign in.
 - The browser never sees a token. The web Worker checks your Access login, then asks the API Worker for data with `READ_TOKEN`.
-- All the text and insights are simple rules in TypeScript, running in your browser. There's no AI and no cost.
+- The insights and charts are simple rules in TypeScript, running in your browser. The one exception is the AI morning note, which the API Worker writes once a day on Cloudflare's free plan.
 
 ### Grafana and Discord
 
 - **Grafana Cloud** reads the same API through the Infinity plugin: a Sleep dashboard, a System health dashboard (`GET /api/runs`) and a "no data" alert.
-- **Discord** gets the morning summary with the recovery light (🟢 / 🟠 / 🔴, same rules as the website), plus a ❌ ping if the daily run fails. The collector reads your recent HRV and resting HR from `GET /api/ingest/vitals` to work out your normal.
+- **Discord** gets the morning summary with the recovery light (🟢 / 🟠 / 🔴, same rules as the website) and the AI note, plus a ❌ ping if the daily run fails. The collector reads your recent HRV and resting HR from `GET /api/ingest/vitals` to work out your normal.
 
 ## The website
 
@@ -91,7 +91,8 @@ The date at the top is one day. The page shows **that day's stats and the sleep 
   - Amber: HRV more than 15% low **or** resting HR 3+ bpm high.
   - Red: both, or HRV low two nights running. That often shows up before illness or after overdoing it.
   - It's a nudge, not a diagnosis.
-- **Verdict and summary:** a one-line grade of the night, then plain sentences about what stood out. These cover time asleep, bedtime drift, deep sleep, wake-ups, HRV, resting HR and the day before.
+- **Today (AI morning note):** a headline on how ready you are, 2 or 3 things to do today, and one line on why. Workers AI writes it after the 09:23 run from your numbers, following `worker/src/skills/daily-note.md`. Discord gets the same note.
+- **Fallback:** if there's no note for that night (the AI was down, or an older night), you see the rule-based verdict and summary instead. They cover time asleep, bedtime drift, deep sleep, wake-ups, HRV, resting HR and the day before.
 
 **Day stats**
 - Steps (with your goal), Body Battery low to high (plus charged and drained), stress (average and peak), active calories, distance, daytime resting HR.

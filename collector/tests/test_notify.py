@@ -38,6 +38,7 @@ def test_message_skips_missing_vitals():
 def run_env(fake_garmin, token_path, monkeypatch):
     monkeypatch.setattr(push, "push", lambda *a, **k: {"ok": True})
     monkeypatch.setattr(push, "get_vitals", lambda *a, **k: [])
+    monkeypatch.setattr(push, "write_note", lambda *a, **k: {})
     monkeypatch.setenv("INGEST_URL", "https://worker.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     monkeypatch.setattr(garmin, "REQUEST_GAP_S", 0)
@@ -96,3 +97,42 @@ def test_recovery_failure_does_not_block_the_message(run_env, monkeypatch, capsy
     assert cli.main(run_env) == 0
     assert "Last night" in posts[0] and "Recovery" not in posts[0]
     assert "recovery light skipped: ConnectionError" in capsys.readouterr().err
+
+
+NOTE = {
+    "date": "2026-09-30",
+    "headline": "Well recovered, a good day to train.",
+    "do_today": ["Do your planned workout.", "Be asleep by 23:30 tonight."],
+    "why": "HRV is above your usual.",
+}
+
+
+def test_note_lines():
+    assert notify.note_lines(NOTE) == (
+        "📝 **Well recovered, a good day to train.**\n"
+        "• Do your planned workout.\n"
+        "• Be asleep by 23:30 tonight."
+    )
+    assert notify.note_lines({"headline": "", "do_today": []}) is None
+
+
+def test_run_adds_the_ai_note(run_env, monkeypatch):
+    monkeypatch.setattr(push, "write_note", lambda url, token, date: {**NOTE, "date": date})
+    posts = []
+    monkeypatch.setattr(notify, "post_discord", lambda url, content: posts.append(content))
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.test/hook")
+    assert cli.main(run_env) == 0
+    assert "📝 **Well recovered, a good day to train.**" in posts[0]
+    assert "• Be asleep by 23:30 tonight." in posts[0]
+
+
+def test_message_still_posts_without_a_note(run_env, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("AI down")
+
+    monkeypatch.setattr(push, "write_note", boom)
+    posts = []
+    monkeypatch.setattr(notify, "post_discord", lambda url, content: posts.append(content))
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.test/hook")
+    assert cli.main(run_env) == 0
+    assert "Last night" in posts[0] and "📝" not in posts[0]
