@@ -138,8 +138,25 @@ def cmd_run(args: argparse.Namespace) -> int:
         days_sent += len(body["days"])
         acts_sent += len(body["activities"])
     print(f"Pushed {days_sent} days and {acts_sent} activities")
+    _write_note(raw, url, token)
     _notify(raw, stats, url=url, token=token)
     return 0
+
+
+def _write_note(raw: dict[str, dict], url: str, token: str) -> None:
+    """Have the Worker write the AI morning note for the newest night.
+
+    Optional extra: if Workers AI is down or over its free allowance, the run still passes
+    and the website falls back to its rule-based summary.
+    """
+    dates = [n.date for n in (parse_sleep(p) for p in raw.values()) if n is not None]
+    if not dates:
+        return
+    try:
+        push.write_note(url, token, max(dates))
+        print(f"Wrote the morning note for {max(dates)}")
+    except Exception as e:
+        print(f"WARNING: morning note skipped: {type(e).__name__}", file=sys.stderr)
 
 
 def _notify(

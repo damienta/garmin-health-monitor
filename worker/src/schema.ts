@@ -100,3 +100,6 @@ export const RangeQuery = z.object({
   to: isoDate.optional(),
   days: z.coerce.number().int().min(1).max(3650).default(30),
 });
+
+/** A `:date` path parameter. */
+export const DateParam = isoDate;
